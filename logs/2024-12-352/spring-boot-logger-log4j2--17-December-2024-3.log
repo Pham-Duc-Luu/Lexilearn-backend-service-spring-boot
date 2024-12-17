@@ -1,0 +1,22 @@
+2024-12-17 16:01:45,745 INFO StartupInfoLogger [main] Starting BackendApplication using Java 21.0.5 with PID 19007 (/mnt/Drive1/myuserhome/project/LexiLearn/spring boot backend/target/classes started by luu in /mnt/Drive1/myuserhome/project/LexiLearn/spring boot backend)
+2024-12-17 16:01:45,750 DEBUG StartupInfoLogger [main] Running with Spring Boot v3.4.0, Spring v6.2.0
+2024-12-17 16:01:45,751 INFO SpringApplication [main] No active profile set, falling back to 1 default profile: "default"
+2024-12-17 16:01:46,462 INFO TomcatWebServer [main] Tomcat initialized with port 5002 (http)
+2024-12-17 16:01:46,471 INFO DirectJDKLog [main] Initializing ProtocolHandler ["http-nio-5002"]
+2024-12-17 16:01:46,473 INFO DirectJDKLog [main] Starting service [Tomcat]
+2024-12-17 16:01:46,473 INFO DirectJDKLog [main] Starting Servlet engine: [Apache Tomcat/10.1.33]
+2024-12-17 16:01:46,498 INFO DirectJDKLog [main] Initializing Spring embedded WebApplicationContext
+2024-12-17 16:01:46,500 INFO ServletWebServerApplicationContext [main] Root WebApplicationContext: initialization completed in 722 ms
+2024-12-17 16:01:46,778 INFO DirectJDKLog [main] Starting ProtocolHandler ["http-nio-5002"]
+2024-12-17 16:01:46,792 INFO TomcatWebServer [main] Tomcat started on port 5002 (http) with context path '/'
+2024-12-17 16:01:46,804 INFO StartupInfoLogger [main] Started BackendApplication in 1.337 seconds (process running for 1.973)
+2024-12-17 16:02:11,119 INFO DirectJDKLog [http-nio-5002-exec-2] Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-12-17 16:02:11,120 INFO FrameworkServlet [http-nio-5002-exec-2] Initializing Servlet 'dispatcherServlet'
+2024-12-17 16:02:11,121 INFO FrameworkServlet [http-nio-5002-exec-2] Completed initialization in 1 ms
+2024-12-17 16:02:11,139 INFO hello [http-nio-5002-exec-2] info 
+2024-12-17 16:02:11,139 TRACE hello [http-nio-5002-exec-2] trace 
+2024-12-17 16:02:11,139 WARN hello [http-nio-5002-exec-2] warn 
+2024-12-17 16:02:11,139 DEBUG hello [http-nio-5002-exec-2] debug 
+2024-12-17 16:02:11,139 ERROR hello [http-nio-5002-exec-2] error 
+2024-12-17 16:02:44,971 INFO GracefulShutdown [SpringApplicationShutdownHook] Commencing graceful shutdown. Waiting for active requests to complete
+2024-12-17 16:02:44,972 INFO GracefulShutdown [tomcat-shutdown] Graceful shutdown complete

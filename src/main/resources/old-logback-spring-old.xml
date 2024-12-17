@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+    <!-- Console Appender with colorized output -->
+
+    <appender name="CONSOLE_TRACE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %magenta([%thread]) %blue(%-5level) %blue(%logger{36}) - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+    <appender name="CONSOLE_DEBUG" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %magenta([%thread]) %green(%-5level) %green(%logger{36}) - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+    <appender name="CONSOLE-INFO" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %magenta([%thread]) %highlight(%-5level) %highlight(%logger{36}) - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+    <appender name="CONSOLE_WARN" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %magenta([%thread]) %yellow(%-5level) %yellow(%logger{36}) - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+    <appender name="CONSOLE_ERROR" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %magenta([%thread]) %red(%-5level) %red(%logger{36}) - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender to log to files with date-based log files -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${application.home:-.}/logs/log_.%d{yyyy-MM-dd}.log</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%date [%level] from %logger in %thread - %message%n%xException</pattern>
+        </encoder>
+    </appender>
+    <logger name="com.example.demo" level="TRACE" />
+
+
+    <!--    <logger name="chapters.configuration" level="INFO"/>-->
+    <!-- Root Logger configuration -->
+
+<!--    <root level="INFO">-->
+<!--        <appender-ref ref="CONSOLE_TRACE" />-->
+<!--        <appender-ref ref="FILE" />-->
+<!--    </root>-->
+    <root level="DEBUG">
+        <appender-ref ref="CONSOLE_DEBUG" />
+        <appender-ref ref="FILE" />
+    </root>
+<!--    <root level="INFO">-->
+<!--        <appender-ref ref="CONSOLE_INFO" />-->
+<!--        <appender-ref ref="FILE" />-->
+<!--    </root>-->
+<!--    <root level="WARN">-->
+<!--        <appender-ref ref="CONSOLE_WARN" />-->
+<!--        <appender-ref ref="FILE" />-->
+<!--    </root>-->
+<!--    <root level="ERROR">-->
+<!--        <appender-ref ref="CONSOLE_ERROR" />-->
+<!--        <appender-ref ref="FILE" />-->
+<!--    </root>-->
+</configuration>
