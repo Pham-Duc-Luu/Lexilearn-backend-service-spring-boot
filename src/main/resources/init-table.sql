@@ -1,9 +1,15 @@
+-- create database
+CREATE DATABASE lexilearn_backend_database;
+
+-- use dataase
+USE lexilearn_backend_database;
 -- Table: User
 CREATE TABLE User (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_name TEXT NOT NULL,
-    user_password TEXT NOT NULL,
-    user_provider VARCHAR(255),
+    user_name VARCHAR(255) NOT NULL,
+    user_email VARCHAR(255) NOT NULL,
+    user_password VARCHAR(255) NOT NULL,
+    user_provider  ENUM('GOOGLE', "FACEBOOK"),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -13,6 +19,7 @@ CREATE TABLE User_Token (
     UT_id INT PRIMARY KEY AUTO_INCREMENT,
     UT_type VARCHAR(255),
     UT_expired_at TIMESTAMP,
+    UT_text TEXT,
     UT_user_id INT,
     FOREIGN KEY (UT_user_id) REFERENCES User(user_id) ON DELETE CASCADE
 );

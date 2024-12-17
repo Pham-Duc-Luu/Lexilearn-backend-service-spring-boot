@@ -9,12 +9,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-//    @Autowired
-//    private ApiKeyInterceptor apiKeyInterceptor;
-//
-//    @Override
-//    public void addInterceptors(InterceptorRegistry registry) {
-//        registry.addInterceptor(apiKeyInterceptor)
-//                .addPathPatterns("/**"); // Apply to all endpoints
-//    }
+    @Autowired
+    private ApiKeyInterceptor apiKeyInterceptor;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(apiKeyInterceptor)
+                .addPathPatterns("/*/api/"); // Apply to all endpoints
+    }
 }
