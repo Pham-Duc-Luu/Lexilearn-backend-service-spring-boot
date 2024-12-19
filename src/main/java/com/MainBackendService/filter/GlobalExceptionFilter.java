@@ -1,6 +1,6 @@
 package com.MainBackendService.filter;
 
-import com.MainBackendService.controller.User.Auth;
+import com.MainBackendService.controller.Auth.Auth;
 import com.MainBackendService.dto.HttpErrorDto;
 import jakarta.validation.ConstraintViolationException;
 import org.apache.logging.log4j.LogManager;
@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.converter.HttpMessageNotReadableException;

@@ -1,5 +1,6 @@
 package com.MainBackendService.dto;
 
+import com.MainBackendService.utils.StrongPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,8 +11,7 @@ public class SignUpDTO  {
 
     @NotNull(message = "Username is required")
     @NotBlank(message = "Username car not be blank")
-    @Size(min = 10, max = 50, message = "Username must be between 3 and 50 characters")
-
+    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     public String user_name;
 
     @NotNull(message = "Email is required")
@@ -20,6 +20,7 @@ public class SignUpDTO  {
 
     @NotNull(message = "Password is required")
     @Size(min = 6)
+    @StrongPassword
     public String user_password;
     public String getUser_password() {
         return user_password;

@@ -1,6 +1,7 @@
 package com.MainBackendService.model;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import java.util.List;
 public class User {
 
     @Id()
-    @GeneratedValue(strategy = GenerationType.IDENTITY )
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Integer userId;
 
@@ -17,28 +18,42 @@ public class User {
     private String userName;
 
 
-
     @Column(nullable = false, name = "user_email")
     private String userEmail;
 
-    @Column(nullable = false, name ="user_password")
+    @Column(nullable = false, name = "user_password")
     private String userPassword;
-
+    @Column(name = "user_avatar")
+    private String userAvatar;
+    @Column(name = "user_thumbnail")
+    private String userThumbnail;
     @Enumerated(EnumType.STRING) // Optionally use EnumType.ORDINAL
-    @Column(name ="user_provider")
+    @Column(name = "user_provider")
     private UserProvider userProvider;
-
-    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", name="created_at")
+    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", name = "created_at")
     private LocalDateTime createdAt;
-
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", name = "update_at")
     private LocalDateTime updateAt;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<UserToken> tokens;
-
-    @OneToMany(mappedBy = "deskOwner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "deskOwner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Desk> desks;
+
+    public String getUserThumbnail() {
+        return userThumbnail;
+    }
+
+    public void setUserThumbnail(String userThumbnail) {
+        this.userThumbnail = userThumbnail;
+    }
+
+    public String getUserAvatar() {
+        return userAvatar;
+    }
+
+    public void setUserAvatar(String userAvatar) {
+        this.userAvatar = userAvatar;
+    }
 
     public String getUserEmail() {
         return userEmail;
@@ -74,7 +89,6 @@ public class User {
     }
 
 
-
     public String getUserPassword() {
         return userPassword;
     }
@@ -82,7 +96,6 @@ public class User {
     public void setUserPassword(String userPassword) {
         this.userPassword = userPassword;
     }
-
 
 
     public LocalDateTime getCreatedAt() {

@@ -5,10 +5,12 @@ CREATE DATABASE lexilearn_backend_database;
 USE lexilearn_backend_database;
 -- Table: User
 CREATE TABLE User (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT PRIMARY KEY AUTO_INCREMENT ,
     user_name VARCHAR(255) NOT NULL,
-    user_email VARCHAR(255) NOT NULL,
+    user_email VARCHAR(255) NOT NULL UNIQUE,
     user_password VARCHAR(255) NOT NULL,
+      user_avatar TEXT,  -- Avatar URL stored as TEXT
+        user_thumbnail TEXT,  -- Thumbnail URL stored as TEXT
     user_provider  ENUM('GOOGLE', "FACEBOOK"),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
