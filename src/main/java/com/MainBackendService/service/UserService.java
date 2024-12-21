@@ -5,6 +5,7 @@ import com.MainBackendService.dto.SignUpDTO;
 import com.MainBackendService.dto.UserProfileDto;
 import com.MainBackendService.dto.UserProfilePatchDto;
 import com.MainBackendService.model.User;
+import com.MainBackendService.model.UserAuthProvider;
 import com.MainBackendService.model.UserToken;
 import com.MainBackendService.repository.UserRepository;
 import com.MainBackendService.repository.UserTokenRepository;
@@ -14,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -25,14 +26,14 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final UserTokenRepository userTokenRepository;
-    private final PasswordEncoder passwordEncoder;
     Logger logger = LogManager.getLogger(UserService.class);
+    BCryptPasswordEncoder passwordEncoder =
+            new BCryptPasswordEncoder(10);
 
     @Autowired
-    public UserService(UserRepository userRepository, UserTokenRepository userTokenRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, UserTokenRepository userTokenRepository) {
         this.userRepository = userRepository;
         this.userTokenRepository = userTokenRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     public void resetPasswordWithOtp(String otp, String email, String password) {
@@ -65,10 +66,6 @@ public class UserService {
     }
 
     public User signUp(SignUpDTO signUpDTO) {
-        // Check if the username already exists
-        if (userRepository.existsByUserName(signUpDTO.getUser_name())) {
-            throw new IllegalArgumentException("Username is already taken");
-        }
 
         if (userRepository.existsByUserEmail(signUpDTO.getEmail())) {
             throw new IllegalArgumentException("Email is already taken");
@@ -83,6 +80,11 @@ public class UserService {
         newUser.setUserEmail(signUpDTO.getEmail());
         newUser.setCreatedAt(LocalDateTime.now());
         newUser.setUpdateAt(LocalDateTime.now());
+        if (signUpDTO.getUserAuthProvider() != null) {
+            newUser.setUserProvider(signUpDTO.getUserAuthProvider());
+        } else {
+            newUser.setUserProvider(UserAuthProvider.LOCAL);
+        }
 
         // Save the user to the database
         return userRepository.save(newUser);
@@ -93,9 +95,14 @@ public class UserService {
 
         User existUser = foundUser.orElseThrow(() -> new RuntimeException("User not found"));
 
+
         // Validate password (assume passwords are hashed)
         if (!passwordEncoder.matches(signInDto.getUser_password(), existUser.getUserPassword())) {
             throw new BadRequestException("Invalid password");
+        }
+        if (!existUser.getUserProvider().equals(UserAuthProvider.LOCAL)) {
+            throw new BadRequestException("Invalid login type");
+
         }
 
         // If the email and password are correct, return the user
@@ -119,20 +126,27 @@ public class UserService {
         return profile;
     }
 
-    public UserProfileDto updateUserProfile(String email, UserProfilePatchDto userProfilePatchDto) {
+    public UserProfileDto updateUserProfile(String email, String name, UserProfilePatchDto userProfilePatchDto) throws IOException {
 
         Optional<User> findUser = userRepository.findByUserEmail(email);
-
         if (findUser.isEmpty()) {
             // Handle the case where the user is not found
             throw new RuntimeException("User not found with email: " + email);
         }
 
-        User user = findUser.get();
 
-        user.setUserAvatar(userProfilePatchDto.getAvatar());
-        user.setUserThumbnail(userProfilePatchDto.getThumbnail());
-        user.setUserName(userProfilePatchDto.getName());
+        User user = findUser.get();
+        if (userProfilePatchDto.getAvatar() != null) {
+            user.setUserAvatar(userProfilePatchDto.getAvatar());
+        }
+        if (userProfilePatchDto.getThumbnail() != null) {
+            user.setUserThumbnail(userProfilePatchDto.getThumbnail());
+
+        }
+        if (userProfilePatchDto.getName() != null) {
+            user.setUserName(userProfilePatchDto.getName());
+
+        }
 
         userRepository.save(user);
 
@@ -145,5 +159,13 @@ public class UserService {
 
         return profile;
 
+    }
+
+    public Optional<User> findUserByName(String name) {
+        return userRepository.findByUserName(name);
+    }
+
+    public Optional<User> findUserByEmail(String email) {
+        return userRepository.findByUserEmail(email);
     }
 }

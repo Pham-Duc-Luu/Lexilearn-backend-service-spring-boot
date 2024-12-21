@@ -9,8 +9,7 @@ import java.time.LocalDateTime;
 
 @Service
 public class TokenCleanupService {
-
-   
+    
     private final UserTokenRepository userTokenRepository;
 
     @Autowired

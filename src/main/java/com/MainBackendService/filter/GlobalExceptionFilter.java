@@ -7,10 +7,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.stream.Collectors;
@@ -58,6 +58,20 @@ public class GlobalExceptionFilter {
     }
 
     // Handle invalid or missing request body
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<HttpErrorDto> handleInvalidRequestBody(SecurityException ex, WebRequest request) {
+        HttpErrorDto errorResponse = new HttpErrorDto(
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                "Invalid request body: " + ex.getMessage(),
+                request.getDescription(false)
+        );
+        logger.error(ex);
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    // Handle invalid or missing request body
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<HttpErrorDto> handleInvalidRequestBody(HttpMessageNotReadableException ex, WebRequest request) {
         HttpErrorDto errorResponse = new HttpErrorDto(
@@ -71,6 +85,7 @@ public class GlobalExceptionFilter {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+
     // Handle all other exceptions
     @ExceptionHandler(Exception.class)
     public ResponseEntity<HttpErrorDto> handleGenericException(Exception ex, WebRequest request) {
@@ -80,6 +95,7 @@ public class GlobalExceptionFilter {
                 ex.getMessage(),
                 request.getDescription(false)
         );
+        ex.printStackTrace();
         logger.error(ex);
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);

@@ -1,7 +1,11 @@
 package com.MainBackendService.dto;
 
+import jakarta.validation.constraints.Size;
+
 public class UserProfilePatchDto {
 
+    @Size(min = 8, max = 50, message = "Username must be between 3 and 50 characters")
+    public String user_name;
     private String name;
     private String avatar;
     private String thumbnail;

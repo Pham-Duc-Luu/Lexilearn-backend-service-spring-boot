@@ -9,9 +9,9 @@ CREATE TABLE User (
     user_name VARCHAR(255) NOT NULL,
     user_email VARCHAR(255) NOT NULL UNIQUE,
     user_password VARCHAR(255) NOT NULL,
-      user_avatar TEXT,  -- Avatar URL stored as TEXT
-        user_thumbnail TEXT,  -- Thumbnail URL stored as TEXT
-    user_provider  ENUM('GOOGLE', "FACEBOOK"),
+     user_avatar TEXT,  -- Avatar URL stored as TEXT
+     user_thumbnail TEXT,  -- Thumbnail URL stored as TEXT
+    user_provider  ENUM('GOOGLE', "FACEBOOK", "LOCAL"),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -42,8 +42,18 @@ CREATE TABLE Vocab (
     vocab_id INT PRIMARY KEY AUTO_INCREMENT,
     vocab_language VARCHAR(255),
     vocab_meaning VARCHAR(255),
-    vocab_image TEXT
+    vocab_image TEXT,
+    vocab_text VARCHAR(255)
 );
+
+-- Table: Vocab_Example
+CREATE TABLE Vocab_Example (
+    VE_id INT PRIMARY KEY AUTO_INCREMENT,
+    VE_text TEXT,
+    VE_vocab_id INT,
+    FOREIGN KEY (VE_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE
+);
+
 
 -- Table: Flashcard
 CREATE TABLE Flashcard (
@@ -58,11 +68,13 @@ CREATE TABLE Flashcard (
 
 -- Table: Desk_Vocab_Flashcard
 CREATE TABLE Desk_Vocab_Flashcard (
-    DVF_desk_id INT,
-    DVF_vocab_id INT,
-    DVF_flashcard_id INT,
+    DVF_id INT AUTO_INCREMENT PRIMARY KEY,
+    DVF_desk_id INT NOT NULL,
+    DVF_vocab_id INT NULL,
+    DVF_flashcard_id INT NULL,
     FOREIGN KEY (DVF_desk_id) REFERENCES Desk(desk_id) ON DELETE CASCADE,
     FOREIGN KEY (DVF_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE,
     FOREIGN KEY (DVF_flashcard_id) REFERENCES Flashcard(flashcard_id) ON DELETE CASCADE,
-    PRIMARY KEY (DVF_desk_id, DVF_vocab_id, DVF_flashcard_id)
+    UNIQUE (DVF_desk_id, DVF_vocab_id, DVF_flashcard_id);
+
 );

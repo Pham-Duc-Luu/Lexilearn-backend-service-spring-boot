@@ -16,11 +16,8 @@ public class User {
 
     @Column(nullable = false, name = "user_name")
     private String userName;
-
-
     @Column(nullable = false, name = "user_email")
     private String userEmail;
-
     @Column(nullable = false, name = "user_password")
     private String userPassword;
     @Column(name = "user_avatar")
@@ -29,7 +26,7 @@ public class User {
     private String userThumbnail;
     @Enumerated(EnumType.STRING) // Optionally use EnumType.ORDINAL
     @Column(name = "user_provider")
-    private UserProvider userProvider;
+    private UserAuthProvider userAuthProvider;
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", name = "created_at")
     private LocalDateTime createdAt;
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", name = "update_at")
@@ -63,13 +60,13 @@ public class User {
         this.userEmail = userEmail;
     }
 
-    public UserProvider getUserProvider() {
-        return userProvider;
+    public UserAuthProvider getUserProvider() {
+        return userAuthProvider;
     }
 
 
-    public void setUserProvider(UserProvider userProvider) {
-        this.userProvider = userProvider;
+    public void setUserProvider(UserAuthProvider userAuthProvider) {
+        this.userAuthProvider = userAuthProvider;
     }
 
     public String getUserName() {

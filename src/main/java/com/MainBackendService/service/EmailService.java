@@ -20,9 +20,7 @@ public class EmailService {
         message.setTo(to);
         message.setSubject("Your OTP Code");
         message.setText("Your OTP code is: " + otp);
-
         mailSender.send(message);
-
         logger.debug("otp send to email");
     }
 }

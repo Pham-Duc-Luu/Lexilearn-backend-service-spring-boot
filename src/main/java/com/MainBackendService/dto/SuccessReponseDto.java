@@ -38,6 +38,7 @@ public class SuccessReponseDto<T> {
         this.message = message;
     }
 
+
     // Getters and Setters
     public LocalDateTime getTimestamp() {
         return timestamp;

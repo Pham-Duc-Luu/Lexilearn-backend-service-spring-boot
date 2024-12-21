@@ -2,7 +2,9 @@ package com.MainBackendService.controller.Auth;
 
 import com.MainBackendService.dto.*;
 import com.MainBackendService.model.User;
+import com.MainBackendService.model.UserAuthProvider;
 import com.MainBackendService.service.EmailService;
+import com.MainBackendService.service.GoogleOAuth2Service;
 import com.MainBackendService.service.TokenService;
 import com.MainBackendService.service.UserService;
 import com.MainBackendService.utils.Otp;
@@ -15,12 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,7 +33,8 @@ public class Auth {
     private TokenService tokenService;
     @Autowired
     private EmailService emailService;
-
+    @Autowired
+    private GoogleOAuth2Service googleOAuth2Service;
     @Autowired
     private UserService userService;
 
@@ -150,6 +151,65 @@ public class Auth {
             // Return error response
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @PostMapping("/google/verify")
+    @CrossOrigin(origins = "http://localhost:3000")
+    public ResponseEntity<?> verifyGoogleToken(@Valid @RequestBody GoogleTokenDto googleTokenDto) throws Exception {
+
+        try {
+
+            // Get the Google user information using the provided access token
+            GoogleUserInfoPayload googleUserInfoPayload = googleOAuth2Service.getUserInfo(
+                    googleOAuth2Service.getGoogleAccessToken(googleTokenDto.getToken())
+            );
+
+            // Check if the user already exists by their email
+            Optional<User> existingUserOptional = userService.findUserByEmail(googleUserInfoPayload.getEmail());
+
+            if (existingUserOptional.isPresent()) {
+                // User exists, sign them in
+                User existUser = existingUserOptional.get();
+
+                // Set access and refresh tokens for the existing user
+                String accessToken = tokenService.setAccessToken(existUser);
+                String refreshToken = tokenService.setRefreshToken(existUser);
+
+                // You can return the tokens as a response, or any other data you need
+                return ResponseEntity.ok(new JwtAuthDto(accessToken, refreshToken)); // Assuming you have a response class
+            } else {
+                // User does not exist, sign them up
+                SignUpDTO signUpDTO = new SignUpDTO();
+
+                signUpDTO.setUser_email(googleUserInfoPayload.getEmail());
+                signUpDTO.setUser_name(googleUserInfoPayload.getGivenName() + " " + googleUserInfoPayload.getFamilyName());
+                signUpDTO.setUser_avatar(googleUserInfoPayload.getPicture());
+
+                signUpDTO.setUserAuthProvider(UserAuthProvider.GOOGLE);
+
+                User newUser = userService.signUp(signUpDTO);
+
+                // Set access and refresh tokens for the new user
+                String accessToken = tokenService.setAccessToken(newUser);
+                String refreshToken = tokenService.setRefreshToken(newUser);
+
+                // Return tokens in the response
+                return ResponseEntity.ok(new JwtAuthDto(accessToken, refreshToken)); // Assuming you have a response class
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            HttpErrorDto errorResponse = new HttpErrorDto(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Internal Server Error",
+                    e.getMessage()
+
+            );
+            // Return error response
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+
+
     }
 
 
