@@ -1,29 +1,39 @@
 package com.MainBackendService.service;
 
 import com.MainBackendService.dto.CreateVocabDto;
-import com.MainBackendService.model.Vocab;
-import com.MainBackendService.model.VocabLanguageType;
-import com.MainBackendService.repository.VocabRepository;
+import com.jooq.sample.model.tables.records.VocabRecord;
+import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import static com.jooq.sample.model.tables.Vocab.VOCAB;
+
 @Service
 public class VocabService {
+    private final DSLContext dslContext;
 
     @Autowired
-    private VocabRepository vocabRepository;
-
-    public Vocab createVocab(CreateVocabDto createVocabDto) {
-        // 2. Create the vocab object
-        Vocab newVocab = new Vocab();
-        newVocab.setVocabLanguage(VocabLanguageType.valueOf(createVocabDto.getVocabLanguage()));
-        newVocab.setVocabMeaning(createVocabDto.getVocabMeaning());
-        newVocab.setVocabImage(createVocabDto.getVocabImage());
-        newVocab.setVocabText(createVocabDto.getVocabText());
-        return saveVocab(newVocab);
+    public VocabService(DSLContext dslContext) {
+        this.dslContext = dslContext;
     }
 
-    public Vocab saveVocab(Vocab vocab) {
-        return vocabRepository.save(vocab);
+
+    public VocabRecord createVocab(CreateVocabDto createVocabDto) {
+        // Create a new vocab record using JOOQ's DSLContext
+        VocabRecord vocabRecord = dslContext.newRecord(VOCAB);
+
+        // Set the fields using the DTO values
+        vocabRecord.setVocabLanguage(createVocabDto.getVocabLanguage());
+        vocabRecord.setVocabMeaning(createVocabDto.getVocabMeaning());
+        vocabRecord.setVocabImage(createVocabDto.getVocabImage());
+        vocabRecord.setVocabText(createVocabDto.getVocabText());
+
+        // Insert the record into the database and store the result
+        vocabRecord.store();
+
+        // Return the created record
+        return vocabRecord;
     }
+
+    
 }

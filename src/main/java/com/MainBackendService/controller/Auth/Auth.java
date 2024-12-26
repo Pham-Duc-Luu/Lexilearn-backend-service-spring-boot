@@ -1,13 +1,13 @@
 package com.MainBackendService.controller.Auth;
 
 import com.MainBackendService.dto.*;
-import com.MainBackendService.model.User;
-import com.MainBackendService.model.UserAuthProvider;
 import com.MainBackendService.service.EmailService;
 import com.MainBackendService.service.GoogleOAuth2Service;
 import com.MainBackendService.service.TokenService;
 import com.MainBackendService.service.UserService;
 import com.MainBackendService.utils.Otp;
+import com.jooq.sample.model.enums.UserUserProvider;
+import com.jooq.sample.model.tables.records.UserRecord;
 import jakarta.validation.Valid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,7 +48,7 @@ public class Auth {
             }
 
             // Call service to create a new user
-            User newUser = userService.signUp(signUpDTO);
+            UserRecord newUser = userService.signUp(signUpDTO);
 
             // * set access and refresh token
             String accessToken = tokenService.setAccessToken(newUser);
@@ -74,7 +74,7 @@ public class Auth {
     public ResponseEntity<?> signIn(@Valid @RequestBody SignInDto signInDto) {
         try {
 
-            User existUser = userService.signIn(signInDto);
+            UserRecord existUser = userService.signIn(signInDto);
 
             // * set access and refresh token
             String accessToken = tokenService.setAccessToken(existUser);
@@ -165,11 +165,11 @@ public class Auth {
             );
 
             // Check if the user already exists by their email
-            Optional<User> existingUserOptional = userService.findUserByEmail(googleUserInfoPayload.getEmail());
+            Optional<UserRecord> existingUserOptional = userService.findUserByEmail(googleUserInfoPayload.getEmail());
 
             if (existingUserOptional.isPresent()) {
                 // User exists, sign them in
-                User existUser = existingUserOptional.get();
+                UserRecord existUser = existingUserOptional.get();
 
                 // Set access and refresh tokens for the existing user
                 String accessToken = tokenService.setAccessToken(existUser);
@@ -185,9 +185,9 @@ public class Auth {
                 signUpDTO.setUser_name(googleUserInfoPayload.getGivenName() + " " + googleUserInfoPayload.getFamilyName());
                 signUpDTO.setUser_avatar(googleUserInfoPayload.getPicture());
 
-                signUpDTO.setUserAuthProvider(UserAuthProvider.GOOGLE);
+                signUpDTO.setUserAuthProvider(UserUserProvider.GOOGLE);
 
-                User newUser = userService.signUp(signUpDTO);
+                UserRecord newUser = userService.signUp(signUpDTO);
 
                 // Set access and refresh tokens for the new user
                 String accessToken = tokenService.setAccessToken(newUser);

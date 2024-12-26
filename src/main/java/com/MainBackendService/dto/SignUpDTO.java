@@ -1,7 +1,7 @@
 package com.MainBackendService.dto;
 
-import com.MainBackendService.model.UserAuthProvider;
 import com.MainBackendService.utils.StrongPassword;
+import com.jooq.sample.model.enums.UserUserProvider;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,14 +23,14 @@ public class SignUpDTO {
 
     public String user_avatar;
     public String user_thumbnail;
-    public UserAuthProvider userAuthProvider;
+    public UserUserProvider userAuthProvider;
 
 
-    public UserAuthProvider getUserAuthProvider() {
+    public UserUserProvider getUserAuthProvider() {
         return userAuthProvider;
     }
 
-    public void setUserAuthProvider(UserAuthProvider userAuthProvider) {
+    public void setUserAuthProvider(UserUserProvider userAuthProvider) {
         this.userAuthProvider = userAuthProvider;
     }
 

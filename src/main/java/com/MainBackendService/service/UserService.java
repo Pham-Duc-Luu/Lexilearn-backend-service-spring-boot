@@ -4,17 +4,13 @@ import com.MainBackendService.dto.SignInDto;
 import com.MainBackendService.dto.SignUpDTO;
 import com.MainBackendService.dto.UserProfileDto;
 import com.MainBackendService.dto.UserProfilePatchDto;
-import com.MainBackendService.model.User;
-import com.MainBackendService.model.UserAuthProvider;
-import com.MainBackendService.model.UserToken;
-import com.MainBackendService.repository.UserRepository;
-import com.MainBackendService.repository.UserTokenRepository;
-import org.apache.coyote.BadRequestException;
+import com.jooq.sample.model.enums.UserTokenUtType;
+import com.jooq.sample.model.enums.UserUserProvider;
+import com.jooq.sample.model.tables.records.UserRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,150 +18,184 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static com.jooq.sample.model.tables.User.USER;
+import static com.jooq.sample.model.tables.UserToken.USER_TOKEN;
+
 @Service
 public class UserService {
-    private final UserRepository userRepository;
-    private final UserTokenRepository userTokenRepository;
+
+    private final DSLContext dslContext;
     Logger logger = LogManager.getLogger(UserService.class);
     BCryptPasswordEncoder passwordEncoder =
             new BCryptPasswordEncoder(10);
 
     @Autowired
-    public UserService(UserRepository userRepository, UserTokenRepository userTokenRepository) {
-        this.userRepository = userRepository;
-        this.userTokenRepository = userTokenRepository;
+    public UserService(DSLContext dslContext) {
+
+        this.dslContext = dslContext;
     }
+
 
     public void resetPasswordWithOtp(String otp, String email, String password) {
         if (verifyOtp(email, otp)) {
-            Optional<User> findUser = userRepository.findByUserEmail(email);
-            if (findUser.isPresent()) {
-                // Encrypt the password
-                String encryptedPassword = passwordEncoder.encode(password);
-                User existUser = findUser.get();
-                existUser.setUserPassword(encryptedPassword);
+            // Hash the new password
+            String hashedPassword = passwordEncoder.encode(password);
 
-                userRepository.save(existUser);
+            // Update the user's password
+            int rowsUpdated = dslContext.update(USER)
+                    .set(USER.USER_PASSWORD, hashedPassword)
+                    .where(USER.USER_EMAIL.eq(email))
+                    .execute();
+
+            if (rowsUpdated == 0) {
+                throw new IllegalArgumentException("Failed to update password. User not found.");
             }
+
         }
     }
 
     public boolean verifyOtp(String email, String otp) {
         // Find the latest OTP for the user by email
-        Page<UserToken> latestTokenOpts = userTokenRepository.findOtpByEmail(email, PageRequest.of(0, 1));
-        if (!latestTokenOpts.isEmpty()) {
-            logger.debug(latestTokenOpts.getContent().get(0).getUTText());
+        var tokenRecord = dslContext.selectFrom(USER_TOKEN)
+                .where(USER_TOKEN.UT_USER_ID.in(
+                        dslContext.select(USER.USER_ID)
+                                .from(USER)
+                                .where(USER.USER_EMAIL.eq(email))
+                ))
+                .and(USER_TOKEN.UT_TYPE.eq(UserTokenUtType.OTP))
+                .orderBy(USER_TOKEN.UT_EXPIRED_AT.desc())
+                .fetchOne();
 
-            UserToken latestToken = latestTokenOpts.getContent().get(0);
-
-            // Check if the OTP matches and the token is not expired
-            return latestToken.getUTText().equals(otp) && latestToken.getUTExpiredAt().isAfter(LocalDateTime.now()); // OTP is valid
+        // Check if a record was found
+        if (tokenRecord == null) {
+            return false; // No OTP found for this email
         }
 
-        return false; // OTP is invalid or expired
+        // Verify if the OTP matches and is not expired
+        boolean isValidOtp = tokenRecord.getUtText().equals(otp) &&
+                tokenRecord.getUtExpiredAt().isAfter(LocalDateTime.now());
+
+        return isValidOtp;
     }
 
-    public User signUp(SignUpDTO signUpDTO) {
+    public UserRecord signUp(SignUpDTO signUpDTO) {
 
-        if (userRepository.existsByUserEmail(signUpDTO.getEmail())) {
+        // Step 1: Check if the email already exists in the database using jOOQ
+        boolean emailExists = dslContext.fetchCount(dslContext.selectFrom(USER)
+                .where(USER.USER_EMAIL.eq(signUpDTO.getUser_email()))) > 0;
+
+        if (emailExists) {
             throw new IllegalArgumentException("Email is already taken");
-
         }
-        // Encrypt the password
+
+        // Step 2: Encrypt the password
         String encryptedPassword = passwordEncoder.encode(signUpDTO.getUser_password());
-        // Create a new user object
-        User newUser = new User();
-        newUser.setUserName(signUpDTO.getUser_name());
-        newUser.setUserPassword(encryptedPassword);  // Encrypt the password
-        newUser.setUserEmail(signUpDTO.getEmail());
-        newUser.setCreatedAt(LocalDateTime.now());
-        newUser.setUpdateAt(LocalDateTime.now());
-        if (signUpDTO.getUserAuthProvider() != null) {
-            newUser.setUserProvider(signUpDTO.getUserAuthProvider());
+
+        // Step 3: Insert the new user into the database using jOOQ
+        int inserted = dslContext.insertInto(USER)
+                .set(USER.USER_NAME, signUpDTO.getUser_name())
+                .set(USER.USER_PASSWORD, encryptedPassword)
+                .set(USER.USER_EMAIL, signUpDTO.getUser_email())
+                .set(USER.CREATED_AT, LocalDateTime.now())
+                .set(USER.UPDATE_AT, LocalDateTime.now())
+                .set(USER.USER_PROVIDER, signUpDTO.getUserAuthProvider() != null ? signUpDTO.getUserAuthProvider() : UserUserProvider.LOCAL)
+                .set(USER.USER_AVATAR, signUpDTO.getUser_avatar()) // Optional avatar
+                .set(USER.USER_THUMBNAIL, signUpDTO.getUser_thumbnail()) // Optional thumbnail
+                .execute();
+
+        // Step 4: Return the created user record (or fetch it from the database)
+        if (inserted > 0) {
+            // Fetch the user record after insertion
+            return dslContext.selectFrom(USER)
+                    .where(USER.USER_EMAIL.eq(signUpDTO.getUser_email()))
+                    .fetchOne();
         } else {
-            newUser.setUserProvider(UserAuthProvider.LOCAL);
+            throw new RuntimeException("Failed to sign up user");
         }
-
-        // Save the user to the database
-        return userRepository.save(newUser);
     }
 
-    public User signIn(SignInDto signInDto) throws IOException {
-        Optional<User> foundUser = userRepository.findByUserEmail(signInDto.getUser_email());
+    public UserRecord signIn(SignInDto signInDto) throws IOException {
+        // Fetch the user by email
+        UserRecord userRecord = dslContext.selectFrom(USER)
+                .where(USER.USER_EMAIL.eq(signInDto.getUser_email()))
+                .fetchOne();
 
-        User existUser = foundUser.orElseThrow(() -> new RuntimeException("User not found"));
-
-
-        // Validate password (assume passwords are hashed)
-        if (!passwordEncoder.matches(signInDto.getUser_password(), existUser.getUserPassword())) {
-            throw new BadRequestException("Invalid password");
-        }
-        if (!existUser.getUserProvider().equals(UserAuthProvider.LOCAL)) {
-            throw new BadRequestException("Invalid login type");
-
+        if (userRecord == null) {
+            throw new IllegalArgumentException("Invalid email or password");
         }
 
-        // If the email and password are correct, return the user
-        return existUser;
+        // Verify the password
+        boolean isPasswordValid = passwordEncoder.matches(signInDto.getUser_password(), userRecord.getUserPassword());
+        if (!isPasswordValid) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+
+        // Return the user record
+        return userRecord;
     }
 
-    public UserProfileDto getUserProfile(String email) {
-        Optional<User> findUser = userRepository.findByUserEmail(email);
-        if (findUser.isEmpty()) {
-            // Handle the case where the user is not found
-            throw new RuntimeException("User not found with email: " + email);
-        }
-        User user = findUser.get();
-        UserProfileDto profile = new UserProfileDto();
-        profile.setId(String.valueOf(user.getUserId())); // Convert Integer to String for id
-        profile.setEmail(user.getUserEmail());
-        profile.setName(user.getUserName());
-        profile.setAvatar(user.getUserAvatar());
-        profile.setThumbnail(user.getUserThumbnail());
-
-        return profile;
+    public Optional<UserProfileDto> getUserProfile(String email) {
+        return Optional.ofNullable(
+                dslContext.selectFrom(USER)
+                        .where(USER.USER_EMAIL.eq(email))
+                        .fetchOne()
+        ).map(userRecord -> {
+            UserProfileDto dto = new UserProfileDto();
+            dto.setId(String.valueOf(userRecord.getUserId()));
+            dto.setEmail(userRecord.getUserEmail());
+            dto.setName(userRecord.getUserName());
+            dto.setAvatar(userRecord.getUserAvatar());
+            dto.setThumbnail(userRecord.getUserThumbnail());
+            return dto;
+        });
     }
 
-    public UserProfileDto updateUserProfile(String email, String name, UserProfilePatchDto userProfilePatchDto) throws IOException {
 
-        Optional<User> findUser = userRepository.findByUserEmail(email);
-        if (findUser.isEmpty()) {
-            // Handle the case where the user is not found
-            throw new RuntimeException("User not found with email: " + email);
+    public UserProfileDto updateUserProfile(String email, String name, UserProfilePatchDto userProfilePatchDto) {
+        // Fetch the user record by email
+        UserRecord userRecord = dslContext.selectFrom(USER)
+                .where(USER.USER_EMAIL.eq(email))
+                .fetchOne();
+
+        if (userRecord == null) {
+            throw new IllegalArgumentException("User not found with the given email: " + email);
         }
 
+        // Update the fields based on UserProfilePatchDto
+        if (userProfilePatchDto.getName() != null && !userProfilePatchDto.getName().isEmpty()) {
+            userRecord.setUserName(userProfilePatchDto.getName());
+        }
 
-        User user = findUser.get();
         if (userProfilePatchDto.getAvatar() != null) {
-            user.setUserAvatar(userProfilePatchDto.getAvatar());
+            userRecord.setUserAvatar(userProfilePatchDto.getAvatar());
         }
+
         if (userProfilePatchDto.getThumbnail() != null) {
-            user.setUserThumbnail(userProfilePatchDto.getThumbnail());
-
-        }
-        if (userProfilePatchDto.getName() != null) {
-            user.setUserName(userProfilePatchDto.getName());
-
+            userRecord.setUserThumbnail(userProfilePatchDto.getThumbnail());
         }
 
-        userRepository.save(user);
+        // Update the user in the database
+        userRecord.store();
 
-        UserProfileDto profile = new UserProfileDto();
-        profile.setId(String.valueOf(user.getUserId())); // Convert Integer to String for id
-        profile.setEmail(user.getUserEmail());
-        profile.setName(user.getUserName());
-        profile.setAvatar(user.getUserAvatar());
-        profile.setThumbnail(user.getUserThumbnail());
+        // Map updated UserRecord to UserProfileDto
+        UserProfileDto updatedProfile = new UserProfileDto();
+        updatedProfile.setId(String.valueOf(userRecord.getUserId()));
+        updatedProfile.setEmail(userRecord.getUserEmail());
+        updatedProfile.setName(userRecord.getUserName());
+        updatedProfile.setAvatar(userRecord.getUserAvatar());
+        updatedProfile.setThumbnail(userRecord.getUserThumbnail());
 
-        return profile;
-
+        return updatedProfile;
     }
 
-    public Optional<User> findUserByName(String name) {
-        return userRepository.findByUserName(name);
+
+    public Optional<UserRecord> findUserByEmail(String email) {
+        // Fetch the user record by email
+        UserRecord userRecord = dslContext.selectFrom(USER)
+                .where(USER.USER_EMAIL.eq(email))
+                .fetchOne();
+
+        return Optional.ofNullable(userRecord);
     }
 
-    public Optional<User> findUserByEmail(String email) {
-        return userRepository.findByUserEmail(email);
-    }
 }

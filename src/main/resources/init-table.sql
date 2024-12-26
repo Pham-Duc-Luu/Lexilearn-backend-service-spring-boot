@@ -44,6 +44,8 @@ CREATE TABLE Vocab (
     vocab_meaning VARCHAR(255),
     vocab_image TEXT,
     vocab_text VARCHAR(255)
+    vocab_desk_id INT,
+    FOREIGN KEY(vocab_desk_id) REFERENCES Desk(desk_id)  ON DELETE CASCADE
 );
 
 -- Table: Vocab_Example
@@ -64,17 +66,11 @@ CREATE TABLE Flashcard (
     flashcard_back_image TEXT,
     flashcard_back_sound TEXT,
     flashcard_back_text TEXT
-);
+    flashcard_vocab_id INT,
+    flashcard_desk_id INT,
+    FOREIGN KEY (flashcard_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE
+    FOREIGN KEY(flashcard_desk_id) REFERENCES Desk(desk_id)  ON DELETE CASCADE
 
--- Table: Desk_Vocab_Flashcard
-CREATE TABLE Desk_Vocab_Flashcard (
-    DVF_id INT AUTO_INCREMENT PRIMARY KEY,
-    DVF_desk_id INT NOT NULL,
-    DVF_vocab_id INT NULL,
-    DVF_flashcard_id INT NULL,
-    FOREIGN KEY (DVF_desk_id) REFERENCES Desk(desk_id) ON DELETE CASCADE,
-    FOREIGN KEY (DVF_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE,
-    FOREIGN KEY (DVF_flashcard_id) REFERENCES Flashcard(flashcard_id) ON DELETE CASCADE,
-    UNIQUE (DVF_desk_id, DVF_vocab_id, DVF_flashcard_id);
 
 );
+

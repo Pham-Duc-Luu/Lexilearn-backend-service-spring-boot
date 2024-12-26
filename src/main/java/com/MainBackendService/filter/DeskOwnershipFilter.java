@@ -1,9 +1,9 @@
 package com.MainBackendService.filter;
 
 import com.MainBackendService.dto.HttpErrorDto;
-import com.MainBackendService.model.User;
 import com.MainBackendService.service.DeskService;
 import com.MainBackendService.service.UserService;
+import com.jooq.sample.model.tables.records.UserRecord;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -51,7 +51,7 @@ public class DeskOwnershipFilter implements Filter {
             if (email == null) {
                 throw new SecurityException("User not authenticated.");
             }
-            Optional<User> existUser = userService.findUserByEmail(email);
+            Optional<UserRecord> existUser = userService.findUserByEmail(email);
             if (existUser.isEmpty()) {
                 throw new SecurityException("Some thing went wrong with user info.");
             }

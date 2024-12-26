@@ -1,8 +1,8 @@
 package com.MainBackendService.argumentResolver;
 
 import com.MainBackendService.dto.AccessTokenDetailsDto;
-import com.MainBackendService.model.User;
 import com.MainBackendService.service.UserService;
+import com.jooq.sample.model.tables.records.UserRecord;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
@@ -33,7 +33,7 @@ public class AccessTokenDetailsArgumentResolver implements HandlerMethodArgument
         // Extract values from request attributes
         String email = (String) request.getAttribute("email");
         String name = (String) request.getAttribute("name");
-        Optional<User> existUser = userService.findUserByEmail(email);
+        Optional<UserRecord> existUser = userService.findUserByEmail(email);
         if (existUser.isEmpty()) throw new IllegalArgumentException("Some thing went wrong");
 
 

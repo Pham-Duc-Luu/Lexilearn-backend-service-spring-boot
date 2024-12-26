@@ -4,9 +4,6 @@ import com.MainBackendService.controller.User.UserProfileController;
 import com.MainBackendService.dto.AccessTokenDetailsDto;
 import com.MainBackendService.dto.CreateVocabDto;
 import com.MainBackendService.dto.HttpErrorDto;
-import com.MainBackendService.dto.SuccessReponseDto;
-import com.MainBackendService.model.Vocab;
-import com.MainBackendService.service.DeskVocabFlashcardService;
 import com.MainBackendService.service.VocabService;
 import jakarta.validation.Valid;
 import org.apache.logging.log4j.LogManager;
@@ -24,8 +21,6 @@ public class VocabController {
     @Autowired
     private VocabService vocabService;
 
-    @Autowired
-    private DeskVocabFlashcardService deskVocabFlashcardService;
 
     @PostMapping()
     public ResponseEntity<?> createNewVocab(
@@ -34,13 +29,8 @@ public class VocabController {
             @Valid @RequestBody CreateVocabDto createVocabDto
     ) {
         try {
-            Vocab newVocab = vocabService.createVocab(createVocabDto);
 
-            deskVocabFlashcardService.createAssociateVocabWithDesk(newVocab.getVocabId(), Integer.valueOf(deskId));
-
-            SuccessReponseDto<Vocab> successReponseDto = new SuccessReponseDto<>(newVocab);
-
-            return new ResponseEntity<>(successReponseDto, HttpStatus.CREATED);
+            return new ResponseEntity<>("", HttpStatus.CREATED);
 
         } catch (Exception e) {
             e.printStackTrace();

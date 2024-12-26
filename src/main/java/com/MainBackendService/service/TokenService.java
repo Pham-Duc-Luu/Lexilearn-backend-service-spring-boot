@@ -1,14 +1,14 @@
 package com.MainBackendService.service;
 
-import com.MainBackendService.model.User;
-import com.MainBackendService.model.UserToken;
-import com.MainBackendService.model.UserTokenType;
-import com.MainBackendService.repository.UserRepository;
-import com.MainBackendService.repository.UserTokenRepository;
+
 import com.MainBackendService.utils.JwtUtil;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.jooq.sample.model.enums.UserTokenUtType;
+import com.jooq.sample.model.tables.records.UserRecord;
+import com.jooq.sample.model.tables.records.UserTokenRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -17,15 +17,16 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Optional;
+
+import static com.jooq.sample.model.tables.User.USER;
+import static com.jooq.sample.model.tables.UserToken.USER_TOKEN;
 
 @Service
 public class TokenService {
-    private final UserTokenRepository userTokenRepository;
     private final JwtUtil jwtUtil = new JwtUtil();
-    private final UserRepository userRepository; // To fetch the user, if not already provided
     private final AccessTokenJwtService accessTokenJwtService;
     private final RefreshTokenJwtService refreshTokenJwtService;
+    private final DSLContext dslContext;
     Logger logger = LogManager.getLogger(TokenService.class);
     @Value("${private.key}")
     private String privateKey;
@@ -40,54 +41,74 @@ public class TokenService {
 
     @Autowired
     public TokenService(
-            UserTokenRepository userTokenRepository,
-            UserRepository userRepository,
+
             AccessTokenJwtService accessTokenJwtService,
-            RefreshTokenJwtService refreshTokenJwtService
+            RefreshTokenJwtService refreshTokenJwtService, DSLContext dslContext
     ) {
-        this.userTokenRepository = userTokenRepository;
-        this.userRepository = userRepository;
+
         this.accessTokenJwtService = accessTokenJwtService;
         this.refreshTokenJwtService = refreshTokenJwtService;
+        this.dslContext = dslContext;
     }
 
 
     @Async
     public void setOtp(String email, String otp) {
-        Optional<User> foundUser = userRepository.findByUserEmail(email);
 
-        User existUser = foundUser.orElseThrow(() -> new RuntimeException("User not found"));
+        // Step 1: Check if the user exists by email
+        Integer userId = dslContext.select(USER.USER_ID)
+                .from(USER)
+                .where(USER.USER_EMAIL.eq(email))
+                .fetchOneInto(Integer.class);
 
-        UserToken otpToken = new UserToken();
-        otpToken.setUTText(otp);
-        otpToken.setUTType(UserTokenType.OTP); // Enum for the type of token (e.g., OTP, PASSWORD_RESET)
-        otpToken.setUTExpiredAt(LocalDateTime.now().plusSeconds(Long.parseLong(optExpiredIn))); // OTP expires in 10 minutes
-        otpToken.setUser(existUser);
-        userTokenRepository.save(otpToken);
-        logger.debug("save otp to database");
+        if (userId == null) {
+            throw new IllegalArgumentException("User with the provided email does not exist");
+        }
+
+        // Step 4: Insert OTP into the User_Token table
+        UserTokenRecord userTokenRecord = dslContext.insertInto(USER_TOKEN)
+                .set(USER_TOKEN.UT_TYPE, UserTokenUtType.OTP) // Set the type to "OTP"
+                .set(USER_TOKEN.UT_TEXT, otp)
+                .set(USER_TOKEN.UT_USER_ID, userId)
+                .set(USER_TOKEN.UT_EXPIRED_AT, LocalDateTime.now().plusSeconds(Long.parseLong(optExpiredIn)))
+                .returning(USER_TOKEN.UT_ID)
+                .fetchOne();
+
     }
 
-    public String setAccessToken(User user) {
+    public String setAccessToken(UserRecord user) {
 
         return accessTokenJwtService.genToken(user.getUserName(), user.getUserEmail());
     }
 
 
-    public String setRefreshToken(User user) {
+    public String setRefreshToken(UserRecord user) {
 
         // * set the algorithm for the jwt token
         Algorithm algorithm = Algorithm.HMAC256(privateKey);
         String refreshToken = refreshTokenJwtService.genToken(user.getUserName(), user.getUserEmail());
 
 
-        UserToken newToken = new UserToken();
+        // Step 1: Check if the user exists by email
+        Integer userId = dslContext.select(USER.USER_ID)
+                .from(USER)
+                .where(USER.USER_EMAIL.eq(user.getUserEmail()))
+                .fetchOneInto(Integer.class);
 
-        newToken.setUTText(refreshToken);
-        newToken.setUser(user);
-        newToken.setUTExpiredAt(LocalDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis() + Integer.valueOf(privateTime)), ZoneId.systemDefault()));
-        newToken.setUTType(UserTokenType.REFRESHTOKEN);
-        // * save the user's refresh token to database
-        userTokenRepository.save(newToken);
+        if (userId == null) {
+            throw new IllegalArgumentException("User with the provided email does not exist");
+        }
+
+        // Step 4: Insert OTP into the User_Token table
+        UserTokenRecord userTokenRecord = dslContext.insertInto(USER_TOKEN)
+                .set(USER_TOKEN.UT_TYPE, UserTokenUtType.REFRESH_TOKEN) // Set the type to "OTP"
+                .set(USER_TOKEN.UT_TEXT, refreshToken)
+                .set(USER_TOKEN.UT_USER_ID, userId)
+                .set(USER_TOKEN.UT_EXPIRED_AT, (LocalDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis() + Integer.valueOf(privateTime)), ZoneId.systemDefault())))
+                .returning(USER_TOKEN.UT_ID)
+                .fetchOne();
+
+
         return refreshToken;
 
     }

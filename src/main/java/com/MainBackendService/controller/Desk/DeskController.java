@@ -3,10 +3,10 @@ package com.MainBackendService.controller.Desk;
 
 import com.MainBackendService.controller.Auth.Auth;
 import com.MainBackendService.dto.*;
-import com.MainBackendService.model.Desk;
-import com.MainBackendService.model.User;
 import com.MainBackendService.service.DeskService;
 import com.MainBackendService.service.UserService;
+import com.jooq.sample.model.tables.records.DeskRecord;
+import com.jooq.sample.model.tables.records.UserRecord;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.apache.logging.log4j.LogManager;
@@ -33,7 +33,7 @@ public class DeskController {
     @PostMapping
     public ResponseEntity<?> createDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @Valid @RequestBody CreateDeskDto createDeskDTO) throws BadRequestException {
         // Fetch user by email (from AccessTokenDetailsDto)
-        Optional<User> existUser = userService.findUserByEmail(accessTokenDetailsDto.getEmail());
+        Optional<UserRecord> existUser = userService.findUserByEmail(accessTokenDetailsDto.getEmail());
         if (existUser.isEmpty()) {
             throw new BadRequestException("User not found");
         }
@@ -42,7 +42,7 @@ public class DeskController {
         createDeskDTO.setDeskOwnerId(existUser.get().getUserId());
 
         // Create new desk
-        Desk newDesk = deskService.createDesk(createDeskDTO);
+        DeskRecord newDesk = deskService.createDesk(createDeskDTO);
 
         // Convert Desk entity to DeskDto
         DeskDto deskDto = new DeskDto(
@@ -51,7 +51,7 @@ public class DeskController {
                 newDesk.getDeskDescription(),
                 newDesk.getDeskThumbnail(),
                 newDesk.getDeskIcon(),
-                newDesk.getDeskIsPublic()
+                newDesk.getDeskIsPublic() != null && newDesk.getDeskIsPublic() == 1 // Convert Byte to Boolean
         );
 
         // Return success response
@@ -61,7 +61,7 @@ public class DeskController {
     @PatchMapping("/{desk_id}")
     public ResponseEntity<?> updateDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId, @Valid @RequestBody DeskDto deskDto) {
         // Check if the desk exists
-        Optional<Desk> desk = deskService.findDeskById(Math.toIntExact(deskId));
+        Optional<DeskRecord> desk = deskService.findDeskById(Math.toIntExact(deskId));
         if (desk.isEmpty()) {
             HttpErrorDto errorResponse = new HttpErrorDto(
                     HttpStatus.NOT_FOUND.value(),
@@ -72,7 +72,7 @@ public class DeskController {
             return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
         }
 
-        if (!desk.get().getDeskOwner().getUserId().equals(accessTokenDetailsDto.getId())) {
+        if (!desk.get().getDeskOwnerId().equals(accessTokenDetailsDto.getId())) {
             HttpErrorDto errorResponse = new HttpErrorDto(
                     HttpStatus.UNAUTHORIZED.value(),
                     HttpStatus.UNAUTHORIZED.getReasonPhrase(),
@@ -82,7 +82,7 @@ public class DeskController {
             return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
         }
 
-        Desk updatedDesk = deskService.updateDesk(Math.toIntExact(deskId), deskDto);
+        DeskRecord updatedDesk = deskService.updateDesk(Math.toIntExact(deskId), deskDto);
         return new ResponseEntity<>(new SuccessReponseDto<DeskDto>(deskService.getDeskDto(updatedDesk)), HttpStatus.CREATED);
 
 
@@ -90,7 +90,7 @@ public class DeskController {
 
     @DeleteMapping("/{desk_id}")
     public ResponseEntity<?> deleteDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId) {
-        Optional<Desk> desk = deskService.findDeskById(Math.toIntExact(deskId));
+        Optional<DeskRecord> desk = deskService.findDeskById(Math.toIntExact(deskId));
         if (desk.isEmpty()) {
             HttpErrorDto errorResponse = new HttpErrorDto(
                     HttpStatus.NOT_FOUND.value(),
@@ -101,7 +101,7 @@ public class DeskController {
             return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
         }
 
-        if (!desk.get().getDeskOwner().getUserId().equals(accessTokenDetailsDto.getId())) {
+        if (!desk.get().getDeskOwnerId().equals(accessTokenDetailsDto.getId())) {
             HttpErrorDto errorResponse = new HttpErrorDto(
                     HttpStatus.UNAUTHORIZED.value(),
                     HttpStatus.UNAUTHORIZED.getReasonPhrase(),
