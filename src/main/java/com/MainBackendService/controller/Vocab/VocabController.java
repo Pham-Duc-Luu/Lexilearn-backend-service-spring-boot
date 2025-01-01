@@ -4,7 +4,13 @@ import com.MainBackendService.controller.User.UserProfileController;
 import com.MainBackendService.dto.AccessTokenDetailsDto;
 import com.MainBackendService.dto.CreateVocabDto;
 import com.MainBackendService.dto.HttpErrorDto;
-import com.MainBackendService.service.VocabService;
+import com.MainBackendService.dto.SuccessReponseDto;
+import com.MainBackendService.service.FlashcardService.FlashcardService;
+import com.MainBackendService.service.SpacedRepetitionSerivce.SM_2_Service;
+import com.MainBackendService.service.VocabService.VocabService;
+import com.jooq.sample.model.tables.records.FlashcardRecord;
+import com.jooq.sample.model.tables.records.SpacedRepetitionRecord;
+import com.jooq.sample.model.tables.records.VocabRecord;
 import jakarta.validation.Valid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +27,11 @@ public class VocabController {
     @Autowired
     private VocabService vocabService;
 
+    @Autowired
+    private FlashcardService flashcardService;
+
+    @Autowired
+    private SM_2_Service sm_2_service;
 
     @PostMapping()
     public ResponseEntity<?> createNewVocab(
@@ -29,8 +40,15 @@ public class VocabController {
             @Valid @RequestBody CreateVocabDto createVocabDto
     ) {
         try {
+            // * create a new vocabulary
+            VocabRecord vocabRecord = vocabService.createVocab(Integer.valueOf(deskId), createVocabDto);
 
-            return new ResponseEntity<>("", HttpStatus.CREATED);
+            // * create a new flashcard with that vocabulary too
+            FlashcardRecord flashcardRecord = flashcardService.initFlashcardForVocabularyInDesk(vocabRecord.getVocabId());
+
+            // * attach the spaced repetition to flashcard ( default is sm-0 )
+            SpacedRepetitionRecord spacedRepetitionRecord = sm_2_service.initSM_2_forFlashcard(flashcardRecord.getFlashcardId());
+            return new ResponseEntity<>(new SuccessReponseDto("create new vocabulary successfully"), HttpStatus.CREATED);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -40,7 +58,6 @@ public class VocabController {
                     HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
                     e.getMessage(), "");
             return new ResponseEntity<>(httpErrorDto, HttpStatus.INTERNAL_SERVER_ERROR);
-
 
         }
 

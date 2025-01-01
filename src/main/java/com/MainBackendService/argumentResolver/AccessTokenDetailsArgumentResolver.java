@@ -16,8 +16,13 @@ import java.util.Optional;
 @Component
 public class AccessTokenDetailsArgumentResolver implements HandlerMethodArgumentResolver {
 
+
+    private final UserService userService;
+
     @Autowired
-    private UserService userService;
+    public AccessTokenDetailsArgumentResolver(UserService userService) {
+        this.userService = userService;
+    }
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {

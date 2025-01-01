@@ -154,7 +154,6 @@ public class Auth {
     }
 
     @PostMapping("/google/verify")
-    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<?> verifyGoogleToken(@Valid @RequestBody GoogleTokenDto googleTokenDto) throws Exception {
 
         try {
@@ -212,5 +211,49 @@ public class Auth {
 
     }
 
+    @GetMapping("/refresh-token")
+    public ResponseEntity<?> generateRefreshToken(@Valid @RequestBody JwtAuthDto jwtAuthDto) {
+
+        try {
+            // Step 1: Find user associated with the provided refresh token
+            UserRecord user = tokenService.findUserWithRefreshToken(jwtAuthDto.getRefresh_token());
+            logger.debug(user);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new HttpErrorDto(
+                                HttpStatus.UNAUTHORIZED.value(),
+                                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                                "Invalid or expired refresh token"
+                        ));
+            }
+
+            // Step 2: Generate a new access token
+            String newAccessToken = tokenService.setAccessToken(user);
+
+            // Step 3: Return the new access token
+            return ResponseEntity.ok(new JwtAuthDto(jwtAuthDto.getRefresh_token(), newAccessToken));
+        } catch (IllegalArgumentException e) {
+            // Handle token-related issues
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new HttpErrorDto(
+                            HttpStatus.UNAUTHORIZED.value(),
+                            HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+
+                            e.getMessage()
+                    ));
+        } catch (Exception e) {
+            // Handle unexpected exceptions
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new HttpErrorDto(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+
+                            e.getMessage()
+                    ));
+        }
+
+    }
 
 }

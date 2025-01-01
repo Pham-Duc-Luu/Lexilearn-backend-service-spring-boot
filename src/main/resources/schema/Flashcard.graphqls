@@ -1,0 +1,20 @@
+type Flashcard {
+    id: ID!
+    front_image: String
+    front_text: String
+    front_sound: String
+    back_image: String
+    back_text: String
+    back_sound: String
+    created_at: String
+    updated_at: String
+    SM: SM
+}
+
+type FlashcardPaginationResult {
+    flashcards: [Flashcard]
+    total: Int
+    skip: Int
+    limit: Int
+}
+

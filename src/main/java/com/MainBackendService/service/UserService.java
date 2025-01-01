@@ -4,6 +4,7 @@ import com.MainBackendService.dto.SignInDto;
 import com.MainBackendService.dto.SignUpDTO;
 import com.MainBackendService.dto.UserProfileDto;
 import com.MainBackendService.dto.UserProfilePatchDto;
+import com.MainBackendService.modal.UserModal;
 import com.jooq.sample.model.enums.UserTokenUtType;
 import com.jooq.sample.model.enums.UserUserProvider;
 import com.jooq.sample.model.tables.records.UserRecord;
@@ -25,6 +26,7 @@ import static com.jooq.sample.model.tables.UserToken.USER_TOKEN;
 public class UserService {
 
     private final DSLContext dslContext;
+
     Logger logger = LogManager.getLogger(UserService.class);
     BCryptPasswordEncoder passwordEncoder =
             new BCryptPasswordEncoder(10);
@@ -198,4 +200,11 @@ public class UserService {
         return Optional.ofNullable(userRecord);
     }
 
+
+    public UserModal findUserById(Integer userId) {
+        // Fetch user from the database by user ID
+        return dslContext.selectFrom(USER)
+                .where(USER.USER_ID.eq(userId))
+                .fetchOneInto(UserModal.class);
+    }
 }

@@ -1,0 +1,8 @@
+type SM {
+    id: ID!
+    name: String
+    count: Int
+    interval:Float
+    EF: Float
+    nextDay:String
+}

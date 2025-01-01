@@ -13,6 +13,7 @@ public class CreateDeskDto {
     private Boolean deskIsPublic;
     private Integer deskOwnerId; // Assuming this is the user ID of the owner
 
+
     // Getters and setters
     public String getDeskName() {
         return deskName;

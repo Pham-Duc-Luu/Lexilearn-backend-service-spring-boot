@@ -1,9 +1,8 @@
 package com.MainBackendService.controller.Desk;
 
 
-import com.MainBackendService.controller.Auth.Auth;
 import com.MainBackendService.dto.*;
-import com.MainBackendService.service.DeskService;
+import com.MainBackendService.service.DeskService.DeskService;
 import com.MainBackendService.service.UserService;
 import com.jooq.sample.model.tables.records.DeskRecord;
 import com.jooq.sample.model.tables.records.UserRecord;
@@ -22,7 +21,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping(path = "${apiPrefix}/desk")
 public class DeskController {
-    Logger logger = LogManager.getLogger(Auth.class);
+    Logger logger = LogManager.getLogger(DeskController.class);
 
     @Autowired
     private DeskService deskService;
@@ -57,6 +56,7 @@ public class DeskController {
         // Return success response
         return new ResponseEntity<>(new SuccessReponseDto(deskDto), HttpStatus.CREATED);
     }
+
 
     @PatchMapping("/{desk_id}")
     public ResponseEntity<?> updateDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId, @Valid @RequestBody DeskDto deskDto) {

@@ -1,4 +1,4 @@
-package com.MainBackendService.service;
+package com.MainBackendService.service.DeskService;
 
 import com.MainBackendService.dto.CreateDeskDto;
 import com.MainBackendService.dto.DeskDto;
@@ -7,6 +7,7 @@ import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.jooq.sample.model.tables.Desk.DESK;
@@ -14,12 +15,12 @@ import static com.jooq.sample.model.tables.Desk.DESK;
 @Service
 public class DeskService {
 
-
     private final DSLContext dslContext;
 
     @Autowired
     public DeskService(DSLContext dslContext) {
         this.dslContext = dslContext;
+
     }
 
     public DeskRecord createDesk(CreateDeskDto createDeskDTO) {
@@ -145,5 +146,11 @@ public class DeskService {
 
     }
 
+    public List<DeskRecord> getDesks(Integer limit, Integer offset) {
+        return dslContext.selectFrom(DESK)
+                .limit(limit)
+                .offset(offset)
+                .fetchInto(DeskRecord.class);  // Map to DeskRecord
+    }
 
 }

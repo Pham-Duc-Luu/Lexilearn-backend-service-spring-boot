@@ -113,5 +113,10 @@ public class TokenService {
 
     }
 
-
+    public UserRecord findUserWithRefreshToken(String refreshToken) {
+        return dslContext.select(USER.fields())
+                .from(USER.join(USER_TOKEN).on(USER.USER_ID.eq(USER_TOKEN.UT_USER_ID)))
+                .where(USER_TOKEN.UT_TEXT.eq(refreshToken))
+                .fetchOneInto(UserRecord.class);
+    }
 }

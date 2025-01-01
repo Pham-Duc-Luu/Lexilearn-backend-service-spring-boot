@@ -1,4 +1,4 @@
-package com.MainBackendService.service;
+package com.MainBackendService.service.VocabService;
 
 import com.MainBackendService.dto.CreateVocabDto;
 import com.jooq.sample.model.tables.records.VocabRecord;
@@ -18,7 +18,7 @@ public class VocabService {
     }
 
 
-    public VocabRecord createVocab(CreateVocabDto createVocabDto) {
+    public VocabRecord createVocab(Integer deskId, CreateVocabDto createVocabDto) {
         // Create a new vocab record using JOOQ's DSLContext
         VocabRecord vocabRecord = dslContext.newRecord(VOCAB);
 
@@ -27,7 +27,7 @@ public class VocabService {
         vocabRecord.setVocabMeaning(createVocabDto.getVocabMeaning());
         vocabRecord.setVocabImage(createVocabDto.getVocabImage());
         vocabRecord.setVocabText(createVocabDto.getVocabText());
-
+        vocabRecord.setVocabDeskId(deskId);
         // Insert the record into the database and store the result
         vocabRecord.store();
 
@@ -35,5 +35,5 @@ public class VocabService {
         return vocabRecord;
     }
 
-    
+
 }
