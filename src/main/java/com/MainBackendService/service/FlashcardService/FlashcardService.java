@@ -1,5 +1,6 @@
 package com.MainBackendService.service.FlashcardService;
 
+import com.MainBackendService.dto.createDto.CreateFlashcardDto;
 import com.jooq.sample.model.tables.Flashcard;
 import com.jooq.sample.model.tables.Vocab;
 import com.jooq.sample.model.tables.records.FlashcardRecord;
@@ -90,5 +91,41 @@ public class FlashcardService {
 
         return flashcardRecords;
     }
+
+    /**
+     * Creates a new Flashcard in a given Desk based on provided FlashcardDto.
+     *
+     * @param deskId             The ID of the desk in which the flashcard will be created.
+     * @param createFlashcardDto The data transfer object containing the flashcard details.
+     * @return The created FlashcardRecord.
+     */
+    public FlashcardRecord createFlashcardInDesk(int deskId, CreateFlashcardDto createFlashcardDto) {
+        // Validate required fields in FlashcardDto
+        if (createFlashcardDto.getFront_text() == null || createFlashcardDto.getFront_text().isBlank()) {
+            throw new IllegalArgumentException("Front text cannot be null or blank.");
+        }
+
+        if (createFlashcardDto.getBack_text() == null || createFlashcardDto.getBack_text().isBlank()) {
+            throw new IllegalArgumentException("Back text cannot be null or blank.");
+        }
+
+        // Create a new Flashcard record
+        Flashcard flashcard = Flashcard.FLASHCARD;
+        FlashcardRecord flashcardRecord = dslContext.newRecord(flashcard);
+
+        flashcardRecord.setFlashcardDeskId(deskId);
+        flashcardRecord.setFlashcardFrontImage(createFlashcardDto.getFront_image());
+        flashcardRecord.setFlashcardFrontSound(createFlashcardDto.getFront_sound());
+        flashcardRecord.setFlashcardFrontText(createFlashcardDto.getFront_text());
+        flashcardRecord.setFlashcardBackImage(createFlashcardDto.getBack_image());
+        flashcardRecord.setFlashcardBackSound(createFlashcardDto.getBack_sound());
+        flashcardRecord.setFlashcardBackText(createFlashcardDto.getBack_text());
+
+        // Store the flashcard in the database
+        flashcardRecord.store();
+
+        return flashcardRecord;
+    }
+
 }
 

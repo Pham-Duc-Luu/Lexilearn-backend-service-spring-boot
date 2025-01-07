@@ -1,4 +1,4 @@
-package com.MainBackendService.dto;
+package com.MainBackendService.dto.createDto;
 
 import jakarta.validation.constraints.NotBlank;
 

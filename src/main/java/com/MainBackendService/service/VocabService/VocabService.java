@@ -1,6 +1,6 @@
 package com.MainBackendService.service.VocabService;
 
-import com.MainBackendService.dto.CreateVocabDto;
+import com.MainBackendService.dto.createDto.CreateVocabDto;
 import com.jooq.sample.model.tables.records.VocabRecord;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;

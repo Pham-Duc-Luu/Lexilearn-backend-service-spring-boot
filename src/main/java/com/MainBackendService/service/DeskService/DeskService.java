@@ -1,7 +1,7 @@
 package com.MainBackendService.service.DeskService;
 
-import com.MainBackendService.dto.CreateDeskDto;
 import com.MainBackendService.dto.DeskDto;
+import com.MainBackendService.dto.createDto.CreateDeskDto;
 import com.jooq.sample.model.tables.records.DeskRecord;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,5 +152,4 @@ public class DeskService {
                 .offset(offset)
                 .fetchInto(DeskRecord.class);  // Map to DeskRecord
     }
-
 }

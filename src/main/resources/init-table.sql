@@ -72,13 +72,13 @@
         flashcard_front_text TEXT,
         flashcard_back_image TEXT,
         flashcard_back_sound TEXT,
-        flashcard_back_text TEXT
-        flashcard_vocab_id INT,
+        flashcard_back_text TEXT,
+        flashcard_vocab_id INT NULL,
         flashcard_desk_id INT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-             update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (flashcard_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE
-        FOREIGN KEY(flashcard_desk_id) REFERENCES Desk(desk_id)  ON DELETE CASCADE
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (flashcard_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE,
+        FOREIGN KEY (flashcard_desk_id) REFERENCES Desk(desk_id) ON DELETE CASCADE
     );
 
   -- Table: Spaced_Repetition

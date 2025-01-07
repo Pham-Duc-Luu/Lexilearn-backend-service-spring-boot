@@ -2,9 +2,9 @@ package com.MainBackendService.controller.Vocab;
 
 import com.MainBackendService.controller.User.UserProfileController;
 import com.MainBackendService.dto.AccessTokenDetailsDto;
-import com.MainBackendService.dto.CreateVocabDto;
 import com.MainBackendService.dto.HttpErrorDto;
 import com.MainBackendService.dto.SuccessReponseDto;
+import com.MainBackendService.dto.createDto.CreateVocabDto;
 import com.MainBackendService.service.FlashcardService.FlashcardService;
 import com.MainBackendService.service.SpacedRepetitionSerivce.SM_2_Service;
 import com.MainBackendService.service.VocabService.VocabService;

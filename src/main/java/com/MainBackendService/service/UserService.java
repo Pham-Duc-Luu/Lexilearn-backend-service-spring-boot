@@ -207,4 +207,5 @@ public class UserService {
                 .where(USER.USER_ID.eq(userId))
                 .fetchOneInto(UserModal.class);
     }
+
 }

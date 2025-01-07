@@ -1,8 +1,15 @@
 package com.MainBackendService.controller.Desk;
 
 
-import com.MainBackendService.dto.*;
+import com.MainBackendService.dto.AccessTokenDetailsDto;
+import com.MainBackendService.dto.DeskDto;
+import com.MainBackendService.dto.HttpErrorDto;
+import com.MainBackendService.dto.SuccessReponseDto;
+import com.MainBackendService.dto.createDto.CreateDeskDto;
+import com.MainBackendService.dto.createDto.CreateFlashcardDto;
+import com.MainBackendService.dto.createDto.CreateFlashcardsDto;
 import com.MainBackendService.service.DeskService.DeskService;
+import com.MainBackendService.service.FlashcardService.FlashcardService;
 import com.MainBackendService.service.UserService;
 import com.jooq.sample.model.tables.records.DeskRecord;
 import com.jooq.sample.model.tables.records.UserRecord;
@@ -25,6 +32,9 @@ public class DeskController {
 
     @Autowired
     private DeskService deskService;
+
+    @Autowired
+    private FlashcardService flashcardService;
 
     @Autowired
     private UserService userService;
@@ -115,4 +125,90 @@ public class DeskController {
         // Return success response
         return new ResponseEntity<>(new SuccessReponseDto<>("Desk deleted successfully."), HttpStatus.OK);
     }
+
+    @PostMapping("/{desk_id}/flashcard")
+    public ResponseEntity<?> createFlashcard(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId, @Valid @RequestBody CreateFlashcardDto createFlashcardDto) {
+        try {
+            Optional<DeskRecord> desk = deskService.findDeskById(Math.toIntExact(deskId));
+            if (desk.isEmpty()) {
+                HttpErrorDto errorResponse = new HttpErrorDto(
+                        HttpStatus.NOT_FOUND.value(),
+                        HttpStatus.NOT_FOUND.getReasonPhrase(),
+                        "Desk not found"
+                );
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            }
+
+            if (!desk.get().getDeskOwnerId().equals(accessTokenDetailsDto.getId())) {
+                HttpErrorDto errorResponse = new HttpErrorDto(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                        "You are not allow to modify this desk"
+                );
+                return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+            }
+
+            flashcardService.createFlashcardInDesk((Math.toIntExact(deskId)), createFlashcardDto);
+            return new ResponseEntity<>(new SuccessReponseDto(HttpStatus.CREATED), HttpStatus.CREATED);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            HttpErrorDto httpErrorDto = new HttpErrorDto(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                    e.getMessage(), "");
+            return new ResponseEntity<>(httpErrorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/{desk_id}/flashcards")
+    public ResponseEntity<?> createFlashcards(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId, @Valid @RequestBody CreateFlashcardsDto createFlashcardsDto) {
+        try {
+            Optional<DeskRecord> desk = deskService.findDeskById(Math.toIntExact(deskId));
+            if (desk.isEmpty()) {
+                HttpErrorDto errorResponse = new HttpErrorDto(
+                        HttpStatus.NOT_FOUND.value(),
+                        HttpStatus.NOT_FOUND.getReasonPhrase(),
+                        "Desk not found"
+                );
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            }
+
+            if (!desk.get().getDeskOwnerId().equals(accessTokenDetailsDto.getId())) {
+                HttpErrorDto errorResponse = new HttpErrorDto(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                        "You are not allow to modify this desk"
+                );
+                return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+            }
+
+            // Get the array of flashcards
+            CreateFlashcardDto[] flashcards = createFlashcardsDto.getFlashcards();
+
+            // Check if the array is null or empty
+            if (flashcards == null || flashcards.length == 0) {
+                throw new IllegalArgumentException("No flashcards provided.");
+            }
+
+            // Loop through each flashcard
+            for (CreateFlashcardDto flashcard : flashcards) {
+                flashcardService.createFlashcardInDesk(Math.toIntExact(deskId), flashcard);
+            }
+
+            return new ResponseEntity<>(new SuccessReponseDto(HttpStatus.CREATED), HttpStatus.CREATED);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            HttpErrorDto httpErrorDto = new HttpErrorDto(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                    e.getMessage(), "");
+            return new ResponseEntity<>(httpErrorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 }
