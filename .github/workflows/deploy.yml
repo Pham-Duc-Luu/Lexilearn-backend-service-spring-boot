@@ -24,7 +24,7 @@ jobs:
           echo "${{secrets.ENV_PATH_SECRET}}" >> local.env
 
       - name: load .env file
-          export $(cat local.env | xargs)
+        run: export $(cat local.env | xargs)
 
       - name: Build with Maven
         run: mvn -B package --file pom.xml
