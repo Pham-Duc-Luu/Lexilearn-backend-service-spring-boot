@@ -7,7 +7,8 @@ COPY pom.xml .
 COPY local.env .
 
 # Export environment variables from local.env
-RUN export $(cat local.env | xargs) && mvn clean install
+RUN export $(cat local.env | xargs) 
+RUN mvn clean install
 
 # Copy the source code
 COPY src ./src
