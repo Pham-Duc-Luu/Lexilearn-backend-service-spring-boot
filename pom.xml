@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>demo</artifactId>
+    <artifactId>Lexilearn</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>demo</name>
-    <description>Demo project for Spring Boot</description>
+    <name>Lexilearn</name>
+    <description>Lexilearn project for Spring Boot</description>
     <url/>
     <licenses>
         <license/>
@@ -247,9 +247,9 @@
                             <!--Insert your DB configuration-->
                             <jdbc>
                                 <driver>com.mysql.cj.jdbc.Driver</driver>
-                                <url>jdbc:mysql://172.17.0.2:3306/lexilearn_backend_database</url>
-                                <user>root</user>
-                                <password>Phamluu2003@</password>
+                                <url>${env.DATABASE_URL}</url>
+                                <user>${env.DATABASE_USER}</user>
+                                <password>${env.DATABASE_PASSWORD}</password>
                             </jdbc>
                             <generator>
                                 <database>

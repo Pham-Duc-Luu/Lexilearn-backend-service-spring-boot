@@ -19,7 +19,7 @@
     -- Table: User_Token
     CREATE TABLE User_Token (
         UT_id INT PRIMARY KEY AUTO_INCREMENT,
-        UT_type VARCHAR(255),
+        UT_type ENUM('REFRESH_TOKEN','OTP'),
         UT_expired_at TIMESTAMP,
         UT_text TEXT,
         UT_user_id INT,
@@ -75,9 +75,9 @@
         flashcard_back_sound TEXT,
         flashcard_back_text TEXT,
         flashcard_vocab_id INT NULL,
-        flashcard_desk_id INT,
+        flashcard_desk_id INT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (flashcard_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE,
         FOREIGN KEY (flashcard_desk_id) REFERENCES Desk(desk_id) ON DELETE CASCADE
     );
@@ -85,7 +85,7 @@
   -- Table: Spaced_Repetition
   CREATE TABLE Spaced_Repetition (
       spaced_repetition_id INT PRIMARY KEY AUTO_INCREMENT, -- Primary key
-      spaced_repetition_name ENUM('SM-0'),                -- Name of the repetition set with ENUM type
+      spaced_repetition_name ENUM('SM-2'),                -- Name of the repetition set with ENUM type
       spaced_repetition_count INT,                        -- Review count
       spaced_repetition_easiness_factor FLOAT,            -- Easiness factor (1 to 5)
       spaced_repetition_interval FLOAT,                   -- Interval in days
