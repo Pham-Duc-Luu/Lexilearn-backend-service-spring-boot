@@ -47,9 +47,10 @@
         vocab_language VARCHAR(255),
         vocab_meaning VARCHAR(255),
         vocab_image TEXT,
-        vocab_text VARCHAR(255)
-        vocab_desk_id INT,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                               update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        vocab_text VARCHAR(255),
+        vocab_desk_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY(vocab_desk_id) REFERENCES Desk(desk_id)  ON DELETE CASCADE
     );
 
@@ -58,8 +59,8 @@
         VE_id INT PRIMARY KEY AUTO_INCREMENT,
         VE_text TEXT,
         VE_vocab_id INT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-             update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (VE_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE
     );
 
