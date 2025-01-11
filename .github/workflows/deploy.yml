@@ -10,7 +10,7 @@ name: Deploy Spring Boot to EC2
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -20,9 +20,10 @@ jobs:
       #set up Java on the server
 
       - name: Create .env file
-        run: |
-          touch local.env
-          echo "${{secrets.ENV_PATH_SECRET}}" >> local.env
+        run: touch local.env
+
+      - name: load secret
+        run: echo "${{secrets.ENV_PATH_SECRET}}" >> local.env
 
       - name: load .env file
         run: export $(cat local.env | xargs)
