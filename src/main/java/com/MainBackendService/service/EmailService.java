@@ -13,7 +13,7 @@ public class EmailService {
     Logger logger = LogManager.getLogger(EmailService.class);
     @Autowired
     private JavaMailSender mailSender;
-
+    
     @Async
     public void sendOtpEmail(String to, String otp) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -21,6 +21,6 @@ public class EmailService {
         message.setSubject("Your OTP Code");
         message.setText("Your OTP code is: " + otp);
         mailSender.send(message);
-        logger.debug("otp send to email");
+
     }
 }

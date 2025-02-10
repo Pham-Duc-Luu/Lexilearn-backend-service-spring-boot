@@ -2,7 +2,6 @@ package com.MainBackendService.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.apache.coyote.BadRequestException;
 
 public class AccessTokenDetailsDto {
     @NotNull
@@ -15,11 +14,10 @@ public class AccessTokenDetailsDto {
     private String name;
 
 
-    public AccessTokenDetailsDto(Integer id, String email, String name) throws BadRequestException {
+    public AccessTokenDetailsDto(Integer id, String email, String name) {
         this.id = id;
         this.email = email;
         this.name = name;
-
 
     }
 

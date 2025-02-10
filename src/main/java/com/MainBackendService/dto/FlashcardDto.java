@@ -1,5 +1,6 @@
 package com.MainBackendService.dto;
 
+import com.jooq.sample.model.tables.records.FlashcardRecord;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -26,6 +27,17 @@ public class FlashcardDto {
         this.back_image = back_image;
         this.back_sound = back_sound;
         this.back_text = back_text;
+    }
+
+    public FlashcardDto(FlashcardRecord flashcardRecord) {
+        this.id = String.valueOf(flashcardRecord.getFlashcardId());
+        this.front_image = flashcardRecord.getFlashcardFrontImage();
+        this.front_sound = flashcardRecord.getFlashcardFrontSound();
+        this.front_text = flashcardRecord.getFlashcardFrontText();
+        this.back_image = flashcardRecord.getFlashcardBackImage();
+        this.back_sound = flashcardRecord.getFlashcardBackSound();
+        this.back_text = flashcardRecord.getFlashcardBackText();
+        this.deskId = String.valueOf(flashcardRecord.getFlashcardDeskId());
     }
 
     public String getDeskId() {

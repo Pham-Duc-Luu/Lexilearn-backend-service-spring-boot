@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -124,7 +125,7 @@ public class Auth {
     @PostMapping("/reset-password/verify-otp-and-change-password")
     public ResponseEntity<?> verifyAndChangePassword(@Valid @RequestBody VerifyOtpAndChangePasswordDto verifyOtpAndChangePasswordDto) {
         try {
-            String opt = Otp.generateOtp();
+
             if (!userService.verifyOtp(verifyOtpAndChangePasswordDto.getEmail(), verifyOtpAndChangePasswordDto.getOtp())) {
                 HttpErrorDto errorResponse = new HttpErrorDto(
                         HttpStatus.BAD_REQUEST.value(),
@@ -154,7 +155,7 @@ public class Auth {
     }
 
     @PostMapping("/google/verify")
-    public ResponseEntity<?> verifyGoogleToken(@Valid @RequestBody GoogleTokenDto googleTokenDto) throws Exception {
+    public ResponseEntity<?> verifyGoogleToken(@Valid @RequestBody GoogleTokenDto googleTokenDto) {
 
         try {
 
@@ -166,16 +167,17 @@ public class Auth {
             // Check if the user already exists by their email
             Optional<UserRecord> existingUserOptional = userService.findUserByEmail(googleUserInfoPayload.getEmail());
 
+            String accessToken;
+            String refreshToken;
+
             if (existingUserOptional.isPresent()) {
                 // User exists, sign them in
                 UserRecord existUser = existingUserOptional.get();
-
+  
                 // Set access and refresh tokens for the existing user
-                String accessToken = tokenService.setAccessToken(existUser);
-                String refreshToken = tokenService.setRefreshToken(existUser);
+                accessToken = tokenService.setAccessToken(existUser);
+                refreshToken = tokenService.setRefreshToken(existUser);
 
-                // You can return the tokens as a response, or any other data you need
-                return ResponseEntity.ok(new JwtAuthDto(accessToken, refreshToken)); // Assuming you have a response class
             } else {
                 // User does not exist, sign them up
                 SignUpDTO signUpDTO = new SignUpDTO();
@@ -183,18 +185,17 @@ public class Auth {
                 signUpDTO.setUser_email(googleUserInfoPayload.getEmail());
                 signUpDTO.setUser_name(googleUserInfoPayload.getGivenName() + " " + googleUserInfoPayload.getFamilyName());
                 signUpDTO.setUser_avatar(googleUserInfoPayload.getPicture());
-
+                signUpDTO.setUser_password(UUID.randomUUID().toString());
                 signUpDTO.setUserAuthProvider(UserUserProvider.GOOGLE);
-
                 UserRecord newUser = userService.signUp(signUpDTO);
 
                 // Set access and refresh tokens for the new user
-                String accessToken = tokenService.setAccessToken(newUser);
-                String refreshToken = tokenService.setRefreshToken(newUser);
-
-                // Return tokens in the response
-                return ResponseEntity.ok(new JwtAuthDto(accessToken, refreshToken)); // Assuming you have a response class
+                accessToken = tokenService.setAccessToken(newUser);
+                refreshToken = tokenService.setRefreshToken(newUser);
             }
+            // You can return the tokens as a response, or any other data you need
+            return new ResponseEntity<JwtAuthDto>(new JwtAuthDto(refreshToken, accessToken), HttpStatus.CREATED); // Assuming you have a response class
+
         } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage());

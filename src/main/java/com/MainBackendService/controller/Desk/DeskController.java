@@ -8,11 +8,13 @@ import com.MainBackendService.dto.SuccessReponseDto;
 import com.MainBackendService.dto.createDto.CreateDeskDto;
 import com.MainBackendService.dto.createDto.CreateFlashcardDto;
 import com.MainBackendService.dto.createDto.CreateFlashcardsDto;
+import com.MainBackendService.exception.HttpResponseException;
 import com.MainBackendService.service.DeskService.DeskService;
 import com.MainBackendService.service.FlashcardService.FlashcardService;
 import com.MainBackendService.service.UserService;
 import com.jooq.sample.model.tables.records.DeskRecord;
 import com.jooq.sample.model.tables.records.UserRecord;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +42,7 @@ public class DeskController {
     private UserService userService;
 
     @PostMapping
+    @Operation(summary = "Create a new desk", description = "this api use to create a new desk from scratch, you have to login to gain this api")
     public ResponseEntity<?> createDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @Valid @RequestBody CreateDeskDto createDeskDTO) throws BadRequestException {
         // Fetch user by email (from AccessTokenDetailsDto)
         Optional<UserRecord> existUser = userService.findUserByEmail(accessTokenDetailsDto.getEmail());
@@ -66,7 +69,6 @@ public class DeskController {
         // Return success response
         return new ResponseEntity<>(new SuccessReponseDto(deskDto), HttpStatus.CREATED);
     }
-
 
     @PatchMapping("/{desk_id}")
     public ResponseEntity<?> updateDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId, @Valid @RequestBody DeskDto deskDto) {
@@ -210,5 +212,12 @@ public class DeskController {
         }
     }
 
+    @PostMapping("/clone/{desk_id}")
+    @Operation(summary = "this api use to clone a desk from a user to another user", description = "this api will copy the desk information, including the flashcards information, ")
+    public ResponseEntity<?> cloneDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId) throws HttpResponseException {
+        deskService.cloneDesk(Math.toIntExact(deskId), accessTokenDetailsDto.getId());
 
+        return new ResponseEntity<>(new SuccessReponseDto("Cloned"), HttpStatus.CREATED);
+
+    }
 }

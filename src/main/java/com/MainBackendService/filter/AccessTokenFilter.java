@@ -3,6 +3,7 @@ package com.MainBackendService.filter;
 import com.MainBackendService.dto.HttpErrorDto;
 import com.MainBackendService.service.AccessTokenJwtService;
 import com.MainBackendService.service.JwtClaims;
+import com.MainBackendService.utils.HttpHeaderUtil;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -29,11 +30,13 @@ public class AccessTokenFilter implements Filter {
             Pattern.compile("/api/v1/.*") // Protect all URLs under /api/v1/protected
     );
     private final List<Pattern> excludedUrlPatterns = List.of(
-            Pattern.compile("/api/v1/auth/.*")// Protect all URLs under /api/v1/protected
+            Pattern.compile("/api/v1/auth/.*"),
+            Pattern.compile("/api/v1/graphql/.*")
 
     );
-
     private final AccessTokenJwtService accessTokenJwtService;
+    @Autowired
+    HttpHeaderUtil httpHeaderUtil;
     Logger logger = LogManager.getLogger(AccessTokenFilter.class);
 
     @Autowired
@@ -46,8 +49,9 @@ public class AccessTokenFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
+
         // Extract API key from the "x-api-key" header
-        String token = extractTokenFromHeader(httpRequest);
+        String token = httpHeaderUtil.extractTokenFromHeader(httpRequest);
 
         // Check if the requested URL matches any protected patterns
         boolean isProtected = protectedUrlPatterns.stream()
@@ -73,7 +77,7 @@ public class AccessTokenFilter implements Filter {
                     response.setContentType("application/json");
                     // Write the error response as JSON
                     try (PrintWriter writer = response.getWriter()) {
-                        writer.write(errorResponseToJson(errorResponse));
+                        writer.write(httpHeaderUtil.errorResponseToJson(errorResponse));
                     }
                     // Log the error message
                     logger.error("Authentication failed: missing access token");
@@ -102,7 +106,7 @@ public class AccessTokenFilter implements Filter {
                     response.setContentType("application/json");
                     // Write the error response as JSON
                     try (PrintWriter writer = response.getWriter()) {
-                        writer.write(errorResponseToJson(errorResponse));
+                        writer.write(httpHeaderUtil.errorResponseToJson(errorResponse));
                     }
                     // Log the error message
                     logger.error("Authentication failed: {}", e.getMessage());
@@ -116,22 +120,5 @@ public class AccessTokenFilter implements Filter {
 
     }
 
-    private String extractTokenFromHeader(HttpServletRequest request) {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7); // Remove "Bearer " prefix
-        }
-        return null;
-    }
 
-    // Convert HttpErrorDto to JSON string (you could use a library like Jackson or Gson for this)
-    private String errorResponseToJson(HttpErrorDto errorResponse) {
-        return "{" +
-                "\"timestamp\":\"" + errorResponse.getTimestamp() + "\"," +
-                "\"status\":" + errorResponse.getStatus() + "," +
-                "\"error\":\"" + errorResponse.getError() + "\"," +
-                "\"message\":\"" + errorResponse.getMessage() + "\"," +
-                "\"path\":\"" + errorResponse.getPath() + "\"" +
-                "}";
-    }
 }

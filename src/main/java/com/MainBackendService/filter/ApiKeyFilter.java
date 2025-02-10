@@ -2,11 +2,13 @@ package com.MainBackendService.filter;
 
 import com.MainBackendService.controller.hello;
 import com.MainBackendService.dto.HttpErrorDto;
+import com.MainBackendService.utils.HttpHeaderUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,9 @@ public class ApiKeyFilter implements Filter {
     private final List<Pattern> protectedUrlPatterns = List.of(
             Pattern.compile("/api/v1/.*") // Protect all URLs under /api/v1/protected
     );
+
+    @Autowired
+    HttpHeaderUtil httpHeaderUtil;
     Logger logger = LogManager.getLogger(hello.class);
     // Your predefined API key (store this securely in a real application)
     @Value("${api.key}")
@@ -59,7 +64,7 @@ public class ApiKeyFilter implements Filter {
                 response.setContentType("application/json");
                 // Write the error response as JSON
                 try (PrintWriter writer = response.getWriter()) {
-                    writer.write(errorResponseToJson(errorResponse));
+                    writer.write(httpHeaderUtil.errorResponseToJson(errorResponse));
                 }
                 // Log the error message
                 logger.error("Authentication failed: missing access token");
@@ -82,7 +87,7 @@ public class ApiKeyFilter implements Filter {
                 response.setContentType("application/json");
                 // Write the error response as JSON
                 try (PrintWriter writer = response.getWriter()) {
-                    writer.write(errorResponseToJson(errorResponse));
+                    writer.write(httpHeaderUtil.errorResponseToJson(errorResponse));
                 }
                 // Log the error message
                 logger.error("Authentication failed: missing access token");
@@ -93,14 +98,5 @@ public class ApiKeyFilter implements Filter {
         chain.doFilter(request, response);
     }
 
-    // Convert HttpErrorDto to JSON string (you could use a library like Jackson or Gson for this)
-    private String errorResponseToJson(HttpErrorDto errorResponse) {
-        return "{" +
-                "\"timestamp\":\"" + errorResponse.getTimestamp() + "\"," +
-                "\"status\":" + errorResponse.getStatus() + "," +
-                "\"error\":\"" + errorResponse.getError() + "\"," +
-                "\"message\":\"" + errorResponse.getMessage() + "\"," +
-                "\"path\":\"" + errorResponse.getPath() + "\"" +
-                "}";
-    }
+
 }

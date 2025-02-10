@@ -2,6 +2,7 @@ package com.MainBackendService.filter;
 
 import com.MainBackendService.controller.Auth.Auth;
 import com.MainBackendService.dto.HttpErrorDto;
+import com.MainBackendService.exception.HttpResponseException;
 import jakarta.validation.ConstraintViolationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -16,6 +18,7 @@ import org.springframework.web.context.request.WebRequest;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionFilter {
     Logger logger = LogManager.getLogger(Auth.class);
 
@@ -100,4 +103,15 @@ public class GlobalExceptionFilter {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(HttpResponseException.class)
+    public ResponseEntity<HttpErrorDto> handleHttpError(HttpResponseException ex, WebRequest request) {
+        HttpErrorDto errorResponse = ex.getErrorDetails();
+        ex.printStackTrace();
+        logger.error(ex);
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.resolve(errorResponse.getStatus()));
+    }
+
+    
 }

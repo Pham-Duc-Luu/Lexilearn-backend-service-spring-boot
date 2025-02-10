@@ -16,7 +16,6 @@ import java.util.Optional;
 @Component
 public class AccessTokenDetailsArgumentResolver implements HandlerMethodArgumentResolver {
 
-
     private final UserService userService;
 
     @Autowired

@@ -8,6 +8,7 @@ import com.MainBackendService.modal.UserModal;
 import com.jooq.sample.model.enums.UserTokenUtType;
 import com.jooq.sample.model.enums.UserUserProvider;
 import com.jooq.sample.model.tables.records.UserRecord;
+import com.jooq.sample.model.tables.records.UserTokenRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
@@ -57,26 +58,25 @@ public class UserService {
     }
 
     public boolean verifyOtp(String email, String otp) {
+        Optional<UserRecord> userRecord = findUserByEmail(email);
+
+        if (userRecord.isEmpty()) {
+            return false;
+        }
         // Find the latest OTP for the user by email
-        var tokenRecord = dslContext.selectFrom(USER_TOKEN)
-                .where(USER_TOKEN.UT_USER_ID.in(
-                        dslContext.select(USER.USER_ID)
-                                .from(USER)
-                                .where(USER.USER_EMAIL.eq(email))
-                ))
-                .and(USER_TOKEN.UT_TYPE.eq(UserTokenUtType.OTP))
-                .orderBy(USER_TOKEN.UT_EXPIRED_AT.desc())
+        UserTokenRecord tokenRecord = dslContext.selectFrom(USER_TOKEN)
+                .where(USER_TOKEN.UT_TEXT.eq(otp)
+                        .and(USER_TOKEN.UT_USER_ID.eq(userRecord.get().getUserId())
+                                .and(USER_TOKEN.UT_TYPE.eq(UserTokenUtType.OTP))
+                        ))
                 .fetchOne();
 
         // Check if a record was found
         if (tokenRecord == null) {
             return false; // No OTP found for this email
         }
-
         // Verify if the OTP matches and is not expired
-        boolean isValidOtp = tokenRecord.getUtText().equals(otp) &&
-                tokenRecord.getUtExpiredAt().isAfter(LocalDateTime.now());
-
+        boolean isValidOtp = tokenRecord.getUtExpiredAt().isAfter(LocalDateTime.now());
         return isValidOtp;
     }
 

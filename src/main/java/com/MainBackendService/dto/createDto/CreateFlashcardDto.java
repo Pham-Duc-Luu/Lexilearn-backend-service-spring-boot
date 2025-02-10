@@ -1,5 +1,6 @@
 package com.MainBackendService.dto.createDto;
 
+import com.MainBackendService.dto.FlashcardDto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -22,6 +23,15 @@ public class CreateFlashcardDto {
         this.back_image = back_image;
         this.back_sound = back_sound;
         this.back_text = back_text;
+    }
+
+    public CreateFlashcardDto(FlashcardDto flashcardDto) {
+        this.front_image = flashcardDto.getFront_image();
+        this.front_sound = flashcardDto.getFront_sound();
+        this.front_text = flashcardDto.getFront_text();
+        this.back_image = flashcardDto.getBack_image();
+        this.back_sound = flashcardDto.getBack_sound();
+        this.back_text = flashcardDto.getBack_text();
     }
 
     public String getFront_image() {

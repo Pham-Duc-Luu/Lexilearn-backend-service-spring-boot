@@ -4,6 +4,7 @@ import com.MainBackendService.dto.createDto.CreateFlashcardDto;
 import com.jooq.sample.model.tables.Flashcard;
 import com.jooq.sample.model.tables.Vocab;
 import com.jooq.sample.model.tables.records.FlashcardRecord;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.jooq.sample.model.tables.Flashcard.FLASHCARD;
 
 @Service
 public class FlashcardService {
@@ -125,6 +128,24 @@ public class FlashcardService {
         flashcardRecord.store();
 
         return flashcardRecord;
+    }
+
+    public List<FlashcardRecord> getFlashcardsInDesk(Integer deskId, Integer limit, Integer offset) {
+        // * query conditions
+        Condition condition = FLASHCARD.FLASHCARD_DESK_ID.eq(deskId);
+        return dslContext.selectFrom(FLASHCARD)
+                .where(condition).limit(limit).offset(offset)
+                .fetchInto(FlashcardRecord.class);
+
+    }
+
+    public List<FlashcardRecord> getFlashcardsInDesk(Integer deskId) {
+        // * query conditions
+        Condition condition = FLASHCARD.FLASHCARD_DESK_ID.eq(deskId);
+        return dslContext.selectFrom(FLASHCARD)
+                .where(condition)
+                .fetchInto(FlashcardRecord.class);
+
     }
 
 }

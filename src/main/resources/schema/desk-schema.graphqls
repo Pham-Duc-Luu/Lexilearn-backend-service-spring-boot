@@ -1,15 +1,16 @@
 type Desk {
-  id: ID!
-  name: String
-  description: String
-  icon: String
-  isPublic: Boolean
-  ownerId: ID
+    id: ID!
+    name: String
+    description: String
+    icon: String
+    isPublic: Boolean
+    ownerId: ID
+    thumbnail: String
 }
 
 type DeskPaginationResult {
-  desks: [Desk]
-  total: Int
-  skip: Int
-  limit: Int
+    desks: [Desk]
+    total: Int
+    skip: Int
+    limit: Int
 }

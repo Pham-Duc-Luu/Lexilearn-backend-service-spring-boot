@@ -1,8 +1,14 @@
 package com.MainBackendService.service.DeskService;
 
 import com.MainBackendService.dto.DeskDto;
+import com.MainBackendService.dto.FlashcardDto;
 import com.MainBackendService.dto.createDto.CreateDeskDto;
+import com.MainBackendService.dto.createDto.CreateFlashcardDto;
+import com.MainBackendService.dto.createDto.CreateFlashcardsDto;
+import com.MainBackendService.exception.HttpNotFoundException;
+import com.MainBackendService.service.FlashcardService.FlashcardService;
 import com.jooq.sample.model.tables.records.DeskRecord;
+import com.jooq.sample.model.tables.records.FlashcardRecord;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,10 +23,13 @@ public class DeskService {
 
     private final DSLContext dslContext;
 
-    @Autowired
-    public DeskService(DSLContext dslContext) {
-        this.dslContext = dslContext;
+    private final FlashcardService flashcardService;
 
+
+    @Autowired
+    public DeskService(DSLContext dslContext, FlashcardService flashcardService) {
+        this.dslContext = dslContext;
+        this.flashcardService = flashcardService;
     }
 
     public DeskRecord createDesk(CreateDeskDto createDeskDTO) {
@@ -152,4 +161,40 @@ public class DeskService {
                 .offset(offset)
                 .fetchInto(DeskRecord.class);  // Map to DeskRecord
     }
+
+    public void cloneDesk(Integer deskId, Integer userId) throws HttpNotFoundException {
+
+        // * find the desk with the id
+        Optional<DeskRecord> deskRecordSource = findDeskById(deskId);
+        if (deskRecordSource.isEmpty()) {
+            throw new HttpNotFoundException("No desk with id " + deskId);
+        }
+        DeskRecord deskSource = deskRecordSource.get();
+        deskSource.setDeskOwnerId(userId);
+
+        // * get the flashcard in desk source
+        List<FlashcardRecord> flashcards = flashcardService.getFlashcardsInDesk(deskSource.getDeskId());
+
+        // * clone the data from desk source to desk target
+        CreateDeskDto createDeskDto = new CreateDeskDto(deskSource);
+        createDeskDto.setDeskOwnerId(userId);
+
+        // * set up flashcards dto
+        List<CreateFlashcardDto> flashcardsDto = flashcards.stream().map(flashcard -> {
+                    FlashcardDto flashcardDto = new FlashcardDto(flashcard);
+                    return new CreateFlashcardDto(flashcardDto);
+                }
+        ).toList();
+        CreateFlashcardsDto createFlashcardsDto = new CreateFlashcardsDto(flashcardsDto);
+
+        // * create a new desk
+        DeskRecord newDesk = createDesk(createDeskDto);
+
+        // * create a new flashcards in desk
+        for (CreateFlashcardDto flashcard : createFlashcardsDto.getFlashcards()) {
+            flashcardService.createFlashcardInDesk(newDesk.getDeskId(), flashcard);
+        }
+
+    }
+
 }

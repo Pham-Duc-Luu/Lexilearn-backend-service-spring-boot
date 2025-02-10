@@ -2,4 +2,6 @@ type Query {
     getFlashcards(skip: Int = 0, limit: Int = 30, deskId: Int!): FlashcardPaginationResult
     getDesk(id: ID!): Desk
     getDesks(skip: Int = 0, limit: Int = 30): DeskPaginationResult
+    getUserDesks(skip: Int = 0, limit: Int = 30): DeskPaginationResult
+    getUserDesk(id: ID!): Desk
 }

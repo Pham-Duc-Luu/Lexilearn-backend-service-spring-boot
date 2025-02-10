@@ -32,13 +32,13 @@
         desk_description TEXT,
         desk_thumbnail TEXT,
         desk_icon TEXT,
+        desk_status ENUM("PUBLISHED", "DRAFTED", "BIN"),
         desk_name VARCHAR(255),
         desk_is_public BOOLEAN,
-        desk_owner_id INT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-             update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        desk_owner_id INT ,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (desk_owner_id) REFERENCES User(user_id) ON DELETE CASCADE
-
     );
 
     -- Table: Vocab

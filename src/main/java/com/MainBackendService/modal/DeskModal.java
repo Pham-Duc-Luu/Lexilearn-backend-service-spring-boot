@@ -1,6 +1,7 @@
 package com.MainBackendService.modal;
 
 public class DeskModal {
+    private final String thumbnail;
     //    @GraphQLQuery(name = "id")
     private String id;
     //    @GraphQLQuery(name = "name")
@@ -15,14 +16,18 @@ public class DeskModal {
     private String ownerId;
     private UserModal owner;
 
-
-    public DeskModal(String id, String name, String description, String icon, Boolean isPublic, String ownerId) {
+    public DeskModal(String id, String name, String description, String icon, Boolean isPublic, String ownerId, String thumbnail) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.icon = icon;
         this.isPublic = isPublic;
         this.ownerId = ownerId;
+        this.thumbnail = thumbnail;
+    }
+
+    public String getThumbnail() {
+        return thumbnail;
     }
 
     public UserModal getOwner() {
