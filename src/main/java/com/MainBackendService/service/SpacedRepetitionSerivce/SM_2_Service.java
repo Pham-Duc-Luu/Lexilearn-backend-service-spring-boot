@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Optional;
+
+import static com.jooq.sample.model.tables.SpacedRepetition.SPACED_REPETITION;
 
 @Service
 public class SM_2_Service {
@@ -24,7 +27,7 @@ public class SM_2_Service {
      */
     public SpacedRepetitionRecord initSM_2_forFlashcard(int flashcardId) {
         // Check if a spaced repetition record already exists for the flashcard
-        SpacedRepetition spacedRepetition = SpacedRepetition.SPACED_REPETITION;
+        SpacedRepetition spacedRepetition = SPACED_REPETITION;
         var existingRecord = dslContext.selectFrom(spacedRepetition)
                 .where(spacedRepetition.SPACED_REPETITION_FLASHCARD_ID.eq(flashcardId))
                 .fetchOne();
@@ -47,23 +50,13 @@ public class SM_2_Service {
         return smRecord;
     }
 
-    public SpacedRepetitionRecord triggerSM_2_algorithm(Integer SpacedRepetitionId, int grade) {
-        // Retrieve the spaced repetition record for the given ID
-        SpacedRepetition spacedRepetition = SpacedRepetition.SPACED_REPETITION;
-        var record = dslContext.selectFrom(spacedRepetition)
-                .where(spacedRepetition.SPACED_REPETITION_ID.eq(SpacedRepetitionId))
-                .fetchOne();
-
-
-        if (record == null) {
-            throw new IllegalArgumentException("No spaced repetition record found for ID: " + SpacedRepetitionId);
-        }
-
+    // * this will demonstrate how the SM 2 algorithm works
+    public SpacedRepetitionRecord triggerSM_2_algorithm(SpacedRepetitionRecord spacedRepetitionRecord, int grade) {
         // Get current values
-        double easinessFactor = record.getSpacedRepetitionEasinessFactor();
-        int count = record.getSpacedRepetitionCount();
-        double interval = record.getSpacedRepetitionInterval();
-        LocalDate nextDay = record.getSpacedRepetitionNextDay();
+        double easinessFactor = spacedRepetitionRecord.getSpacedRepetitionEasinessFactor();
+        int count = spacedRepetitionRecord.getSpacedRepetitionCount();
+        double interval = spacedRepetitionRecord.getSpacedRepetitionInterval();
+        LocalDate nextDay = spacedRepetitionRecord.getSpacedRepetitionNextDay();
 
         if (grade >= 3) {
             // Update the interval and next review date
@@ -89,14 +82,19 @@ public class SM_2_Service {
         // Update next review date
         nextDay = LocalDate.now().plusDays((long) interval);
         // Store the updated values in the record
-        record.setSpacedRepetitionCount(count + 1);
-        record.setSpacedRepetitionEasinessFactor(easinessFactor);
-        record.setSpacedRepetitionInterval(interval);
-        record.setSpacedRepetitionNextDay(nextDay);
+        spacedRepetitionRecord.setSpacedRepetitionCount(count + 1);
+        spacedRepetitionRecord.setSpacedRepetitionEasinessFactor(easinessFactor);
+        spacedRepetitionRecord.setSpacedRepetitionInterval(interval);
+        spacedRepetitionRecord.setSpacedRepetitionNextDay(nextDay);
 
-        // Save the updated record back to the database
-        record.store();
+        return spacedRepetitionRecord;
+    }
 
-        return record;
+    public Optional<SpacedRepetitionRecord> getSpacedRepetitionRecordBelongToFlashcardId(Integer flashcardId) {
+        return Optional.ofNullable(
+                dslContext.selectFrom(SPACED_REPETITION)
+                        .where(SPACED_REPETITION.SPACED_REPETITION_FLASHCARD_ID.eq(flashcardId))
+                        .fetchOne()
+        );
     }
 }

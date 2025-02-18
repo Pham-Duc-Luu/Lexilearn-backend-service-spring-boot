@@ -212,7 +212,7 @@ public class Auth {
 
     }
 
-    @GetMapping("/refresh-token")
+    @PostMapping("/refresh-token")
     public ResponseEntity<?> generateRefreshToken(@Valid @RequestBody JwtAuthDto jwtAuthDto) {
 
         try {

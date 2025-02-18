@@ -1,5 +1,8 @@
 package com.MainBackendService.modal;
 
+import com.MainBackendService.dto.GraphqlDto.FlashcardPaginationResult;
+import com.jooq.sample.model.enums.DeskDeskStatus;
+
 public class DeskModal {
     private final String thumbnail;
     //    @GraphQLQuery(name = "id")
@@ -15,6 +18,24 @@ public class DeskModal {
     //    @GraphQLQuery(name = "ownerId")
     private String ownerId;
     private UserModal owner;
+    private String createdAt;
+    private String updatedAt;
+    private DeskDeskStatus status;
+    private FlashcardPaginationResult flashcardPaginationResult;
+
+    public DeskModal(String id, String name, String description, String icon, Boolean isPublic, String ownerId, String thumbnail, String createdAt, String updatedAt, DeskDeskStatus deskStatus) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.icon = icon;
+        this.isPublic = isPublic;
+        this.ownerId = ownerId;
+        this.thumbnail = thumbnail;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.status = deskStatus;
+    }
+
 
     public DeskModal(String id, String name, String description, String icon, Boolean isPublic, String ownerId, String thumbnail) {
         this.id = id;
@@ -24,6 +45,14 @@ public class DeskModal {
         this.isPublic = isPublic;
         this.ownerId = ownerId;
         this.thumbnail = thumbnail;
+    }
+
+    public FlashcardPaginationResult getFlashcardPaginationResult() {
+        return flashcardPaginationResult;
+    }
+
+    public void setFlashcardPaginationResult(FlashcardPaginationResult flashcardPaginationResult) {
+        this.flashcardPaginationResult = flashcardPaginationResult;
     }
 
     public String getThumbnail() {

@@ -6,6 +6,38 @@ type Desk {
     isPublic: Boolean
     ownerId: ID
     thumbnail: String
+    owner: User
+    status: DeskStatus
+    createdAt: String
+    updatedAt: String
+    flashcardQuantity: Int
+}
+
+enum DeskStatus {
+    PUBLISHED
+    DRAFTED
+    BIN
+}
+
+enum SortOrder {
+    ASC
+    DESC
+}
+
+enum DeskSortField{
+    name
+    createdAt
+    updatedAt
+}
+
+input DeskQueryFilter {
+    isPublic: Boolean
+    status: DeskStatus
+}
+
+input DeskQuerySort {
+    field: DeskSortField
+    order: SortOrder
 }
 
 type DeskPaginationResult {

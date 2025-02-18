@@ -8,6 +8,7 @@ public class UserModal {
     private String avatar;
     private String thumbnail;
     private String provider;
+
     public UserModal(String id, String name, String email, String avatar, String thumbnail, String provider) {
         this.id = id;
         this.name = name;
@@ -15,6 +16,10 @@ public class UserModal {
         this.avatar = avatar;
         this.thumbnail = thumbnail;
         this.provider = provider;
+    }
+
+    public UserModal() {
+
     }
 
     public String getId() {

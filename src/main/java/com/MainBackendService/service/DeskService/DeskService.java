@@ -132,6 +132,8 @@ public class DeskService {
         return desk;  // Return the saved/updated desk record
     }
 
+
+    // * return true if the user own the desk, false otherwise
     public boolean isUserOwnerOfDesk(Integer userId, Integer deskId) {
         // Query the Desk table to check if the desk exists and the user is the owner
         Integer ownerId = dslContext.select(DESK.DESK_OWNER_ID)
@@ -196,5 +198,6 @@ public class DeskService {
         }
 
     }
+
 
 }

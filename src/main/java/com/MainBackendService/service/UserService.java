@@ -203,9 +203,18 @@ public class UserService {
 
     public UserModal findUserById(Integer userId) {
         // Fetch user from the database by user ID
-        return dslContext.selectFrom(USER)
-                .where(USER.USER_ID.eq(userId))
-                .fetchOneInto(UserModal.class);
+        UserRecord userRecord = dslContext.selectFrom(USER)
+                .where(USER.USER_ID.eq(userId)).fetchOne();
+
+        UserModal userModal = new UserModal();
+        userModal.setId(String.valueOf(userRecord.getUserId()));
+        userModal.setAvatar(userRecord.getUserAvatar());
+        userModal.setEmail(userRecord.getUserEmail());
+        userModal.setName(userRecord.getUserName());
+        userModal.setThumbnail(userRecord.getUserThumbnail());
+        userModal.setProvider(String.valueOf(userRecord.getUserProvider()));
+        return userModal;
+
     }
 
 }

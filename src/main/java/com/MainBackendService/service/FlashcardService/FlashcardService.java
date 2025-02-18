@@ -12,11 +12,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.jooq.sample.model.tables.Flashcard.FLASHCARD;
 
 @Service
 public class FlashcardService {
+
 
     @Autowired
     private DSLContext dslContext;
@@ -54,6 +56,13 @@ public class FlashcardService {
         return flashcardRecord;
     }
 
+    public Integer getFlashcardQuantityInDesk(int deskId) {
+        // Fetch total count
+        return dslContext.selectCount()
+                .from(FLASHCARD)
+                .where(FLASHCARD.FLASHCARD_DESK_ID.eq(deskId))
+                .fetchOne(0, int.class);
+    }
 
     /**
      * Initializes flashcards for all vocabularies in a given desk.
@@ -147,6 +156,15 @@ public class FlashcardService {
                 .fetchInto(FlashcardRecord.class);
 
     }
+
+    public Optional<FlashcardRecord> getFlashcardById(Integer flashcardId) {
+        return Optional.ofNullable(
+                dslContext.selectFrom(FLASHCARD)
+                        .where(FLASHCARD.FLASHCARD_ID.eq(flashcardId))
+                        .fetchOne()
+        );
+    }
+
 
 }
 
