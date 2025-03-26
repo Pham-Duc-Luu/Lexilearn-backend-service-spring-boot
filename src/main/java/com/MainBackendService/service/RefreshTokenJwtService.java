@@ -1,5 +1,7 @@
 package com.MainBackendService.service;
 
+import com.MainBackendService.dto.AuthenticationDto.UserJWTObject;
+import com.MainBackendService.exception.HttpResponseException;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -29,11 +31,22 @@ public class RefreshTokenJwtService {
         this.algorithm = Algorithm.HMAC256(privateKey);
     }
 
+    @Deprecated
     public String genToken(String user_name, String user_email) {
 
         String refreshToken = JWT.create()
                 .withClaim(JwtClaims.USER_EMAIL.getClaimName(), user_email)
                 .withClaim(JwtClaims.USER_NAME.getClaimName(), user_name)
+                .withIssuedAt(Instant.now()).withExpiresAt(Instant.now().plus(Duration.ofHours(Long.parseLong(privateTime))))
+                .sign(algorithm);
+        return refreshToken;
+    }
+
+    public String genToken(UserJWTObject userJWTObject) throws HttpResponseException {
+        String refreshToken = JWT.create()
+                .withClaim(JwtClaims.User.getClaimName(), userJWTObject.toJson())
+                .withClaim(JwtClaims.USER_EMAIL.getClaimName(), userJWTObject.getUser_email())
+                .withClaim(JwtClaims.USER_NAME.getClaimName(), userJWTObject.getUser_email())
                 .withIssuedAt(Instant.now()).withExpiresAt(Instant.now().plus(Duration.ofHours(Long.parseLong(privateTime))))
                 .sign(algorithm);
 

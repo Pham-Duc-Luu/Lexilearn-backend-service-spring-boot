@@ -1,6 +1,5 @@
 package com.MainBackendService.filter;
 
-import com.MainBackendService.controller.Auth.Auth;
 import com.MainBackendService.dto.HttpErrorDto;
 import com.MainBackendService.exception.HttpResponseException;
 import jakarta.validation.ConstraintViolationException;
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 @ControllerAdvice
 public class GlobalExceptionFilter {
-    Logger logger = LogManager.getLogger(Auth.class);
+    Logger logger = LogManager.getLogger(GlobalExceptionFilter.class);
 
     // Handle validation errors for @Valid request body
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -113,5 +112,5 @@ public class GlobalExceptionFilter {
         return new ResponseEntity<>(errorResponse, HttpStatus.resolve(errorResponse.getStatus()));
     }
 
-    
+
 }

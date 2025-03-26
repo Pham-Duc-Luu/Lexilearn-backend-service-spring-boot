@@ -1,27 +1,39 @@
 package com.MainBackendService.service.FlashcardService;
 
 import com.MainBackendService.dto.createDto.CreateFlashcardDto;
+import com.MainBackendService.modal.FlashcardModal;
+import com.MainBackendService.service.SpacedRepetitionSerivce.SM_2_Service;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jooq.sample.model.tables.Flashcard;
 import com.jooq.sample.model.tables.Vocab;
 import com.jooq.sample.model.tables.records.FlashcardRecord;
+import com.jooq.sample.model.tables.records.SpacedRepetitionRecord;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static com.jooq.sample.model.tables.Flashcard.FLASHCARD;
 
+
 @Service
 public class FlashcardService {
 
 
+    ObjectMapper objectMapper = new ObjectMapper();
+
     @Autowired
     private DSLContext dslContext;
+
+    @Autowired
+    private SM_2_Service sm_2_service;
 
     /**
      * Initializes a new Flashcard for a Vocabulary in a given Desk.
@@ -131,12 +143,83 @@ public class FlashcardService {
         flashcardRecord.setFlashcardFrontText(createFlashcardDto.getFront_text());
         flashcardRecord.setFlashcardBackImage(createFlashcardDto.getBack_image());
         flashcardRecord.setFlashcardBackSound(createFlashcardDto.getBack_sound());
+
         flashcardRecord.setFlashcardBackText(createFlashcardDto.getBack_text());
+        flashcardRecord.setFlashcardDeskPosition(getFlashcardQuantityInDesk(deskId) + 1);
 
         // Store the flashcard in the database
         flashcardRecord.store();
 
         return flashcardRecord;
+    }
+
+    public FlashcardRecord createFlashcard(int deskId, FlashcardModal flashcardModal) {
+        // Validate required fields in FlashcardDto
+        if (flashcardModal.getFront_text() == null || flashcardModal.getFront_text().isBlank()) {
+            throw new IllegalArgumentException("Front text cannot be null or blank.");
+        }
+
+        if (flashcardModal.getBack_text() == null || flashcardModal.getBack_text().isBlank()) {
+            throw new IllegalArgumentException("Back text cannot be null or blank.");
+        }
+
+        // Create a new Flashcard record
+        Flashcard flashcard = Flashcard.FLASHCARD;
+        FlashcardRecord flashcardRecord = dslContext.newRecord(flashcard);
+
+        flashcardRecord.setFlashcardDeskId(deskId);
+        flashcardRecord.setFlashcardFrontImage(flashcardModal.getFront_image());
+        flashcardRecord.setFlashcardFrontSound(flashcardModal.getFront_sound());
+        flashcardRecord.setFlashcardFrontText(flashcardModal.getFront_text());
+        flashcardRecord.setFlashcardBackImage(flashcardModal.getBack_image());
+        flashcardRecord.setFlashcardBackSound(flashcardModal.getBack_sound());
+        flashcardRecord.setFlashcardBackText(flashcardModal.getBack_text());
+        flashcardRecord.setFlashcardDeskPosition(flashcardModal.getDesk_position());
+
+        // Store the flashcard in the database
+        flashcardRecord.store();
+
+        return flashcardRecord;
+    }
+
+    public FlashcardModal updateFlashcard(FlashcardModal flashcardModal) {
+        Flashcard flashcard = Flashcard.FLASHCARD;
+
+        // Find the existing flashcard record
+        FlashcardRecord flashcardRecord = dslContext.selectFrom(flashcard)
+                .where(flashcard.FLASHCARD_ID.eq(Integer.valueOf(flashcardModal.getId())))
+                .fetchOne();
+
+        if (flashcardRecord == null) {
+            throw new RuntimeException("Flashcard not found with ID: " + flashcardModal.getId());
+        }
+
+        // Update fields if provided
+        flashcardRecord.setFlashcardFrontImage(flashcardModal.getFront_image());
+        flashcardRecord.setFlashcardFrontText(flashcardModal.getFront_text());
+        flashcardRecord.setFlashcardFrontSound(flashcardModal.getFront_sound());
+        flashcardRecord.setFlashcardBackImage(flashcardModal.getBack_image());
+        flashcardRecord.setFlashcardBackText(flashcardModal.getBack_text());
+        flashcardRecord.setFlashcardBackSound(flashcardModal.getBack_sound());
+        flashcardRecord.setFlashcardDeskPosition(flashcardModal.getDesk_position());
+        flashcardRecord.setUpdatedAt(LocalDateTime.now());
+
+        // Update the flashcard in the database
+        flashcardRecord.update();
+
+        // Return the updated flashcard data
+        return new FlashcardModal(
+                String.valueOf(flashcardRecord.getFlashcardId()),
+                flashcardRecord.getFlashcardFrontImage(),
+                flashcardRecord.getFlashcardFrontText(),
+                flashcardRecord.getFlashcardFrontSound(),
+                flashcardRecord.getFlashcardBackImage(),
+                flashcardRecord.getFlashcardBackText(),
+                flashcardRecord.getFlashcardBackSound(),
+                flashcardRecord.getCreatedAt().toString(),
+                flashcardRecord.getUpdatedAt().toString()
+
+        );
     }
 
     public List<FlashcardRecord> getFlashcardsInDesk(Integer deskId, Integer limit, Integer offset) {
@@ -157,6 +240,26 @@ public class FlashcardService {
 
     }
 
+    public List<FlashcardModal> getFlashcardsInDesk(Integer deskId, Class<FlashcardModal> flashcardModalClass) {
+        // * query conditions
+        Condition condition = FLASHCARD.FLASHCARD_DESK_ID.eq(deskId);
+        Flashcard flashcard = Flashcard.FLASHCARD;
+        return dslContext.select(
+                        flashcard.FLASHCARD_ID.as("id"),
+                        flashcard.FLASHCARD_FRONT_IMAGE.as("frontImage"),
+                        flashcard.FLASHCARD_FRONT_TEXT.as("frontText"),
+                        flashcard.FLASHCARD_FRONT_SOUND.as("frontSound"),
+                        flashcard.FLASHCARD_BACK_IMAGE.as("backImage"),
+                        flashcard.FLASHCARD_BACK_TEXT.as("backText"),
+                        flashcard.FLASHCARD_BACK_SOUND.as("backSound"),
+                        flashcard.CREATED_AT.as("createdAt"),
+                        flashcard.UPDATED_AT.as("updatedAt")
+                ).from(FLASHCARD)
+                .where(condition)
+                .orderBy(FLASHCARD.FLASHCARD_DESK_ID.asc())
+                .fetchInto(FlashcardModal.class);
+    }
+
     public Optional<FlashcardRecord> getFlashcardById(Integer flashcardId) {
         return Optional.ofNullable(
                 dslContext.selectFrom(FLASHCARD)
@@ -165,6 +268,62 @@ public class FlashcardService {
         );
     }
 
+    public FlashcardModal getFlashcard(Integer flashcardId) {
+        Flashcard flashcard = Flashcard.FLASHCARD;
+        return dslContext.select(
+                        flashcard.FLASHCARD_ID.as("id"),
+                        flashcard.FLASHCARD_FRONT_IMAGE.as("frontImage"),
+                        flashcard.FLASHCARD_FRONT_TEXT.as("frontText"),
+                        flashcard.FLASHCARD_FRONT_SOUND.as("frontSound"),
+                        flashcard.FLASHCARD_BACK_IMAGE.as("backImage"),
+                        flashcard.FLASHCARD_BACK_TEXT.as("backText"),
+                        flashcard.FLASHCARD_BACK_SOUND.as("backSound"),
+                        flashcard.CREATED_AT.as("createdAt"),
+                        flashcard.UPDATED_AT.as("updatedAt")
+                )
+                .from(flashcard)
+                .where(flashcard.FLASHCARD_ID.eq(flashcardId))
+                .fetchSingleInto(FlashcardModal.class);
+    }
+
+    public List<FlashcardRecord> getNeedToReviewFlashcards(Integer deskId) {
+        List<FlashcardRecord> flashcardRecordList = getFlashcardsInDesk(deskId);
+
+        // Get today's date
+        LocalDate today = LocalDate.now();
+
+        // Filter flashcards that need review
+        return flashcardRecordList.stream()
+                .filter(flashcardRecord -> {
+                    SpacedRepetitionRecord spacedRepetitionRecord =
+                            sm_2_service.getSpacedRepetitionRecordBelongToFlashcardId(flashcardRecord.getFlashcardId());
+
+                    return !spacedRepetitionRecord.getSpacedRepetitionNextDay().isAfter(today);
+                })
+                .toList(); // Converts the filtered stream into a List
+    }
+
+    public List<FlashcardModal> getNeedToReviewFlashcards(Integer deskId, Class<FlashcardModal> flashcardModalClass) {
+        List<FlashcardModal> flashcardModalList = getFlashcardsInDesk(deskId, flashcardModalClass);
+
+        // Get today's date
+        LocalDate today = LocalDate.now();
+
+        // Filter flashcards that need review
+        return flashcardModalList.stream()
+                .filter(flashcardRecord -> {
+                    SpacedRepetitionRecord spacedRepetitionRecord =
+                            sm_2_service.getSpacedRepetitionRecordBelongToFlashcardId(Integer.valueOf(flashcardRecord.getId()));
+
+                    return !spacedRepetitionRecord.getSpacedRepetitionNextDay().isAfter(today);
+                })
+                .toList(); // Converts the filtered stream into a List
+    }
+
+
+    public void deleteFlashcard(Integer deskId, Integer flashcardId) {
+        dslContext.delete(FLASHCARD).where(FLASHCARD.FLASHCARD_DESK_ID.eq(deskId)).execute();
+    }
 
 }
 

@@ -1,5 +1,7 @@
 package com.MainBackendService.service;
 
+import com.MainBackendService.dto.AuthenticationDto.UserJWTObject;
+import com.MainBackendService.exception.HttpResponseException;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -29,6 +31,7 @@ public class AccessTokenJwtService {
         this.algorithm = Algorithm.HMAC256(publicKey);
     }
 
+    @Deprecated
     public String genToken(String user_name, String user_email) {
 
         String accessToken = JWT.create()
@@ -38,6 +41,16 @@ public class AccessTokenJwtService {
                 .sign(algorithm);
 
         return accessToken;
+    }
+
+    public String genToken(UserJWTObject userJWTObject) throws HttpResponseException {
+
+        return JWT.create()
+                .withClaim(JwtClaims.User.getClaimName(), userJWTObject.toJson())
+                .withClaim(JwtClaims.USER_EMAIL.getClaimName(), userJWTObject.getUser_email())
+                .withClaim(JwtClaims.USER_NAME.getClaimName(), userJWTObject.getUser_email())
+                .withIssuedAt(Instant.now()).withExpiresAt(Instant.now().plus(Duration.ofHours(Long.parseLong(publicTime))))
+                .sign(algorithm);
     }
 
 

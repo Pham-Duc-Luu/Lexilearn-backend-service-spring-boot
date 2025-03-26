@@ -18,3 +18,33 @@ type FlashcardPaginationResult {
     limit: Int
 }
 
+input  CreateOrUpdateFlashcardInput{
+    id: ID
+    desk_id : ID!
+    front_image: String
+    front_text: String
+    front_sound: String
+    back_image: String
+    back_text: String
+    back_sound: String
+}
+input  CreateFlashcardInput{
+    desk_id : ID!
+    front_image: String
+    front_text: String
+    front_sound: String
+    back_image: String
+    back_text: String
+    back_sound: String
+}
+
+input  UpdateFlashcardInput{
+    id: ID!
+    desk_id : ID!
+    front_image: String
+    front_text: String
+    front_sound: String
+    back_image: String
+    back_text: String
+    back_sound: String
+}

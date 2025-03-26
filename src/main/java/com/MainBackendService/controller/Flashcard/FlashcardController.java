@@ -54,16 +54,10 @@ public class FlashcardController {
         }
 
         // * check if the flashcard have already existed the spaced repetition record or not
-        Optional<SpacedRepetitionRecord> spacedRepetitionRecord = sm_2_service.getSpacedRepetitionRecordBelongToFlashcardId(flashcardRecord.get().getFlashcardId());
-        if (spacedRepetitionRecord.isEmpty()) {
-            // If not present, initialize a new spaced repetition record
-            SpacedRepetitionRecord newRecord = sm_2_service.initSM_2_forFlashcard(flashcardRecord.get().getFlashcardId());
+        SpacedRepetitionRecord spacedRepetitionRecord = sm_2_service.getSpacedRepetitionRecordBelongToFlashcardId(flashcardRecord.get().getFlashcardId());
 
-            // Re-assign spacedRepetitionRecord to the newly created one
-            spacedRepetitionRecord = Optional.of(newRecord);
-        }
         // * update the SM 2 object after review the flashcard
-        SpacedRepetitionRecord updatedSpacedRepetitionRecord = sm_2_service.triggerSM_2_algorithm(spacedRepetitionRecord.get(), Integer.valueOf(grade));
+        SpacedRepetitionRecord updatedSpacedRepetitionRecord = sm_2_service.triggerSM_2_algorithm(spacedRepetitionRecord, Integer.valueOf(grade));
         return new ResponseEntity<>(new SuccessReponseDto("Review successfully"), HttpStatus.CREATED);
     }
 }

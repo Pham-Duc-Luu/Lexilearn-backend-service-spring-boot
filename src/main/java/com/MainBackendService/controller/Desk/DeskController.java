@@ -12,6 +12,7 @@ import com.MainBackendService.exception.HttpResponseException;
 import com.MainBackendService.service.DeskService.DeskService;
 import com.MainBackendService.service.FlashcardService.FlashcardService;
 import com.MainBackendService.service.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jooq.sample.model.tables.records.DeskRecord;
 import com.jooq.sample.model.tables.records.UserRecord;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,12 +50,15 @@ public class DeskController {
         if (existUser.isEmpty()) {
             throw new BadRequestException("User not found");
         }
+        logger.debug(createDeskDTO.getDeskIcon());
 
         // * add user id to desk
         createDeskDTO.setDeskOwnerId(existUser.get().getUserId());
 
         // Create new desk
         DeskRecord newDesk = deskService.createDesk(createDeskDTO);
+
+        logger.debug(newDesk.getCreatedAt());
 
         // Convert Desk entity to DeskDto
         DeskDto deskDto = new DeskDto(
@@ -71,7 +75,8 @@ public class DeskController {
     }
 
     @PatchMapping("/{desk_id}")
-    public ResponseEntity<?> updateDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId, @Valid @RequestBody DeskDto deskDto) {
+    @Operation(summary = "update desk information")
+    public ResponseEntity<?> updateDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId, @Valid @RequestBody DeskDto deskDto) throws JsonProcessingException {
         // Check if the desk exists
         Optional<DeskRecord> desk = deskService.findDeskById(Math.toIntExact(deskId));
         if (desk.isEmpty()) {
@@ -101,6 +106,7 @@ public class DeskController {
     }
 
     @DeleteMapping("/{desk_id}")
+    @Operation(summary = "delete desk ")
     public ResponseEntity<?> deleteDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId) {
         Optional<DeskRecord> desk = deskService.findDeskById(Math.toIntExact(deskId));
         if (desk.isEmpty()) {
@@ -129,6 +135,7 @@ public class DeskController {
     }
 
     @PostMapping("/{desk_id}/flashcard")
+    @Operation(summary = "this api create flashcard in desk one per times")
     public ResponseEntity<?> createFlashcard(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId, @Valid @RequestBody CreateFlashcardDto createFlashcardDto) {
         try {
             Optional<DeskRecord> desk = deskService.findDeskById(Math.toIntExact(deskId));
@@ -165,6 +172,7 @@ public class DeskController {
     }
 
     @PostMapping("/{desk_id}/flashcards")
+    @Operation(summary = "this api create a bunch flashcards in a desk")
     public ResponseEntity<?> createFlashcards(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId, @Valid @RequestBody CreateFlashcardsDto createFlashcardsDto) {
         try {
             Optional<DeskRecord> desk = deskService.findDeskById(Math.toIntExact(deskId));

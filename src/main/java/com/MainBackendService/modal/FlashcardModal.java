@@ -1,5 +1,8 @@
 package com.MainBackendService.modal;
 
+import com.MainBackendService.dto.GraphqlDto.CreateFlashcardInput;
+import com.MainBackendService.dto.GraphqlDto.UpdateFlashcardInput;
+
 public class FlashcardModal {
     private String id;
     private String front_image;
@@ -10,7 +13,41 @@ public class FlashcardModal {
     private String back_sound;
     private String created_at;
     private String updated_at;
+    private Integer desk_position;
     private SMModal SM; // Add this field
+
+    public FlashcardModal(String id, String front_image, String front_text, String front_sound, String back_image, String back_text, String back_sound, String created_at, String updated_at, Integer desk_position) {
+        this.id = id;
+        this.front_image = front_image;
+        this.front_text = front_text;
+        this.front_sound = front_sound;
+        this.back_image = back_image;
+        this.back_text = back_text;
+        this.back_sound = back_sound;
+        this.created_at = created_at;
+        this.updated_at = updated_at;
+        this.desk_position = desk_position;
+    }
+
+    public FlashcardModal(CreateFlashcardInput createFlashcardInput) {
+        this.front_image = createFlashcardInput.getFront_image();
+        this.front_text = createFlashcardInput.getFront_text();
+        this.front_sound = createFlashcardInput.getFront_sound();
+        this.back_image = createFlashcardInput.getBack_image();
+        this.back_text = createFlashcardInput.getBack_text();
+        this.back_sound = createFlashcardInput.getBack_sound();
+    }
+
+    public FlashcardModal(UpdateFlashcardInput updateFlashcardInput) {
+        this.id = updateFlashcardInput.getId().toString();
+        this.front_image = updateFlashcardInput.getFront_image();
+        this.front_text = updateFlashcardInput.getFront_text();
+        this.front_sound = updateFlashcardInput.getFront_sound();
+        this.back_image = updateFlashcardInput.getBack_image();
+        this.back_text = updateFlashcardInput.getBack_text();
+        this.back_sound = updateFlashcardInput.getBack_sound();
+    }
+
 
     public FlashcardModal(String id, String front_image, String front_text, String front_sound, String back_image, String back_text, String back_sound, String created_at, String updated_at) {
         this.id = id;
@@ -22,6 +59,14 @@ public class FlashcardModal {
         this.back_sound = back_sound;
         this.created_at = created_at;
         this.updated_at = updated_at;
+    }
+
+    public Integer getDesk_position() {
+        return desk_position;
+    }
+
+    public void setDesk_position(Integer desk_position) {
+        this.desk_position = desk_position;
     }
 
     public SMModal getSM() {

@@ -6,11 +6,20 @@ import com.MainBackendService.dto.createDto.CreateDeskDto;
 import com.MainBackendService.dto.createDto.CreateFlashcardDto;
 import com.MainBackendService.dto.createDto.CreateFlashcardsDto;
 import com.MainBackendService.exception.HttpNotFoundException;
+import com.MainBackendService.exception.HttpUnauthorizedException;
+import com.MainBackendService.modal.DeskModal;
 import com.MainBackendService.service.FlashcardService.FlashcardService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jooq.sample.model.enums.DeskDeskStatus;
+import com.jooq.sample.model.tables.Flashcard;
 import com.jooq.sample.model.tables.records.DeskRecord;
 import com.jooq.sample.model.tables.records.FlashcardRecord;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,11 +29,17 @@ import static com.jooq.sample.model.tables.Desk.DESK;
 
 @Service
 public class DeskService {
-
     private final DSLContext dslContext;
-
     private final FlashcardService flashcardService;
+    Logger logger = LogManager.getLogger(DeskService.class);
+    ObjectMapper objectMapper = new ObjectMapper();
+    private ElasticsearchOperations elasticsearchOperations;
 
+    public DeskService(DSLContext dslContext, FlashcardService flashcardService, ElasticsearchOperations elasticsearchOperations) {
+        this.dslContext = dslContext;
+        this.flashcardService = flashcardService;
+        this.elasticsearchOperations = elasticsearchOperations;
+    }
 
     @Autowired
     public DeskService(DSLContext dslContext, FlashcardService flashcardService) {
@@ -47,22 +62,25 @@ public class DeskService {
                 .set(DESK.DESK_DESCRIPTION, createDeskDTO.getDeskDescription())
                 .set(DESK.DESK_THUMBNAIL, createDeskDTO.getDeskThumbnail())
                 .set(DESK.DESK_ICON, createDeskDTO.getDeskIcon())
+                .set(DESK.DESK_OWNER_ID, createDeskDTO.getDeskOwnerId())
                 .set(DESK.DESK_IS_PUBLIC, createDeskDTO.getDeskIsPublic() ? (byte) 1 : (byte) 0)  // Fixing the boolean to byte conversion                .set(DESK.DESK_OWNER_ID, deskOwnerId)
-                .returning(DESK.DESK_ID)  // Returning the generated desk ID
-                .fetchOne();
-
+                .returning()
+                .fetchOneInto(DeskRecord.class);
 
         // Save Desk object to the database
         return deskRecord;
     }
 
-    public DeskRecord updateDesk(Integer deskId, DeskDto deskDto) {
+    public DeskRecord updateDesk(Integer deskId, DeskDto deskDto) throws JsonProcessingException {
+
+
         // Use jOOQ to update the desk in the database
         int affectedRows = dslContext.update(DESK)
                 .set(DESK.DESK_NAME, deskDto.getDeskName())  // Set new desk name
                 .set(DESK.DESK_DESCRIPTION, deskDto.getDeskDescription())  // Set new desk description
                 .set(DESK.DESK_THUMBNAIL, deskDto.getDeskThumbnail())  // Set new thumbnail
                 .set(DESK.DESK_ICON, deskDto.getDeskIcon())  // Set new icon
+                .set(DESK.DESK_STATUS, DeskDeskStatus.valueOf(deskDto.getDeskStatus()))
                 .set(DESK.DESK_IS_PUBLIC, deskDto.getDeskIsPublic() ? (byte) 1 : (byte) 0)  // Convert Boolean to Byte
                 .where(DESK.DESK_ID.eq(deskId))  // Specify the deskId to update
                 .execute();
@@ -77,6 +95,48 @@ public class DeskService {
             // Handle if the desk wasn't found or updated (optional)
             throw new IllegalArgumentException("Desk with ID " + deskId + " does not exist or no changes were made.");
         }
+    }
+
+    public DeskRecord getDeskById(Integer deskId) {
+        return dslContext.selectFrom(DESK).where(DESK.DESK_ID.eq(deskId)).fetchOne();
+    }
+
+    public DeskRecord updateDesk(Integer deskId, DeskModal deskModal) throws JsonProcessingException {
+        // Use jOOQ to update the desk in the database
+        int affectedRows = dslContext.update(DESK)
+                .set(DESK.DESK_NAME, deskModal.getName())  // Set new desk name
+                .set(DESK.DESK_DESCRIPTION, deskModal.getDescription())  // Set new desk description
+                .set(DESK.DESK_THUMBNAIL, deskModal.getThumbnail())  // Set new thumbnail
+                .set(DESK.DESK_ICON, deskModal.getIcon())  // Set new icon
+                .set(DESK.DESK_STATUS, deskModal.getStatus())
+                .set(DESK.DESK_IS_PUBLIC, deskModal.getIsPublic() ? (byte) 1 : (byte) 0)  // Convert Boolean to Byte
+                .where(DESK.DESK_ID.eq(deskId))  // Specify the deskId to update
+                .execute();
+
+        // You can return the updated record or a status based on the affected rows
+        if (affectedRows > 0) {
+            // Fetch the updated desk record (optional)
+            return dslContext.selectFrom(DESK)
+                    .where(DESK.DESK_ID.eq(deskId))
+                    .fetchOne();
+        } else {
+            // Handle if the desk wasn't found or updated (optional)
+            throw new IllegalArgumentException("Desk with ID " + deskId + " does not exist or no changes were made.");
+        }
+    }
+
+    public DeskRecord updateUserDesk(Integer userId, DeskDto deskDto) throws HttpUnauthorizedException, JsonProcessingException {
+        if (!isUserOwnerOfDesk(userId, deskDto.getDeskOwnerId())) {
+            throw new HttpUnauthorizedException("You are not allow to modify this desk");
+        }
+        return updateDesk(deskDto.getDeskOwnerId(), deskDto);
+    }
+
+    public DeskRecord updateUserDesk(Integer userId, DeskModal deskModal) throws HttpUnauthorizedException, JsonProcessingException {
+        if (!isUserOwnerOfDesk(userId, Integer.valueOf(deskModal.getOwnerId()))) {
+            throw new HttpUnauthorizedException("You are not allow to modify this desk");
+        }
+        return updateDesk(userId, deskModal);
     }
 
     public DeskDto getDeskDto(DeskRecord desk) {
@@ -132,6 +192,14 @@ public class DeskService {
         return desk;  // Return the saved/updated desk record
     }
 
+    public Integer deskSize(Integer deskId) {
+        Flashcard flashcard = Flashcard.FLASHCARD;
+        return dslContext
+                .selectCount()
+                .from(flashcard)
+                .where(flashcard.FLASHCARD_DESK_ID.eq(deskId))
+                .fetchOne(0, int.class);
+    }
 
     // * return true if the user own the desk, false otherwise
     public boolean isUserOwnerOfDesk(Integer userId, Integer deskId) {
@@ -198,6 +266,5 @@ public class DeskService {
         }
 
     }
-
 
 }

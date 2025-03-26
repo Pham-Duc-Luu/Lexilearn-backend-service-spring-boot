@@ -30,8 +30,8 @@ public class AccessTokenFilter implements Filter {
             Pattern.compile("/api/v1/.*") // Protect all URLs under /api/v1/protected
     );
     private final List<Pattern> excludedUrlPatterns = List.of(
-            Pattern.compile("/api/v1/auth/.*"),
-            Pattern.compile("/api/v1/graphql/.*")
+            Pattern.compile("/api/v1/auth/.*")
+           , Pattern.compile("/api/v1/graphql/.*")
 
     );
     private final AccessTokenJwtService accessTokenJwtService;

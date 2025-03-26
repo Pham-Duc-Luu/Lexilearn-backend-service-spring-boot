@@ -1,8 +1,11 @@
 package com.MainBackendService.service.DeskService;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import com.MainBackendService.dto.DeskDto;
 import com.MainBackendService.dto.GraphqlDto.DeskPaginationResult;
 import com.MainBackendService.dto.GraphqlDto.DeskQueryFilter;
 import com.MainBackendService.dto.GraphqlDto.DeskQuerySort;
+import com.MainBackendService.dto.GraphqlDto.SearchDeskArg;
 import com.MainBackendService.modal.DeskModal;
 import com.MainBackendService.service.UserService;
 import org.apache.logging.log4j.LogManager;
@@ -10,9 +13,15 @@ import org.apache.logging.log4j.Logger;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.jooq.sample.model.tables.Desk.DESK;
 
@@ -24,6 +33,9 @@ public class DeskGQLService {
     Logger logger = LogManager.getLogger(DeskGQLService.class);
     @Autowired
     private DSLContext dslContext;
+
+    @Autowired
+    private ElasticsearchOperations elasticsearchOperations;
 
     @Autowired
     public DeskGQLService(UserService userService) {
@@ -265,5 +277,147 @@ public class DeskGQLService {
 
         // Return the result wrapped in DeskPaginationResult
         return new DeskPaginationResult(desks, total, skip, limit);
+    }
+
+    public List<DeskDto> searchUserDesksByText(SearchDeskArg searchDeskArg, Integer owerID) {
+
+        Query searchQuery;
+
+        // * apply ramdom search
+
+        searchQuery = Query.of(q -> q
+                .bool(b -> b
+                        .should(sh -> sh
+                                .match(f -> f
+                                        .query(searchDeskArg.getQ())
+                                        .field(DeskDto.DESK_DESCRIPTION)
+
+                                        .fuzziness("AUTO")
+                                )
+                        )
+                        .should(sh -> sh
+                                .match(f -> f
+                                        .field(DeskDto.DESK_NAME)
+                                        .query(searchDeskArg.getQ())
+
+                                        .fuzziness("AUTO")
+                                )
+                        ).filter(f -> f.term(t -> t.field(DeskDto.DESK_OWNER_ID).value(owerID)))
+                        .minimumShouldMatch("1")
+                )
+
+        );
+
+
+        NativeQuery nativeQuery = NativeQuery.builder()
+                .withQuery(searchQuery)
+                .build();
+
+        SearchHits<DeskDto> searchHits = elasticsearchOperations.search(nativeQuery, DeskDto.class, DeskDto.DEFAULT_INDEX_COORDINATES);
+
+
+        return searchHits.getSearchHits().stream()
+                .map(hit -> hit.getContent())
+                .collect(Collectors.toList());
+    }
+
+    public List<DeskDto> searchUserDesksByText(Integer skip, Integer limit, SearchDeskArg searchDeskArg, Integer owerID) {
+
+        Query searchQuery;
+
+        // * apply ramdom search
+
+        searchQuery = Query.of(q -> q
+                .bool(b -> b
+                        .should(sh -> sh
+                                .match(f -> f
+                                        .query(searchDeskArg.getQ())
+                                        .field(DeskDto.DESK_DESCRIPTION)
+
+                                        .fuzziness("AUTO")
+                                )
+                        )
+                        .should(sh -> sh
+                                .match(f -> f
+                                        .field(DeskDto.DESK_NAME)
+                                        .query(searchDeskArg.getQ())
+
+                                        .fuzziness("AUTO")
+                                )
+                        ).filter(f -> f.term(t -> t.field(DeskDto.DESK_OWNER_ID).value(owerID)))
+                        .minimumShouldMatch("1")
+                )
+
+        );
+
+
+        Pageable pageable = PageRequest.of(skip / limit, limit);
+
+        NativeQuery nativeQuery = NativeQuery.builder()
+                .withQuery(searchQuery)
+                .withPageable(pageable)
+                .build();
+
+        SearchHits<DeskDto> searchHits = elasticsearchOperations.search(nativeQuery, DeskDto.class, DeskDto.DEFAULT_INDEX_COORDINATES);
+
+
+        return searchHits.getSearchHits().stream()
+                .map(hit -> hit.getContent())
+                .collect(Collectors.toList());
+    }
+
+    public List<DeskDto> searchDesksByText(Integer skip, Integer limit, SearchDeskArg searchDeskArg) {
+
+        Query searchQuery;
+
+
+        // * apply ramdom search
+        // TODO : Remove or update this ramdom
+        if (searchDeskArg == null || searchDeskArg.getQ() == null || searchDeskArg.getQ().isEmpty() || searchDeskArg.getIsRandom()) {
+            searchQuery = Query.of(q ->
+                    q.functionScore(f -> f
+                            .functions(fn -> fn
+                                    .randomScore(
+                                            r -> r.seed(searchDeskArg.getRandomScore())
+                                    ) // Generates a different result each time
+                            )));
+        } else {
+            searchQuery = Query.of(q -> q
+                    .bool(b -> b
+                            .should(sh -> sh
+                                    .match(f -> f
+                                            .query(searchDeskArg.getQ())
+                                            .field(DeskDto.DESK_DESCRIPTION)
+
+                                            .fuzziness("AUTO")
+                                    )
+                            )
+                            .should(sh -> sh
+                                    .match(f -> f
+                                            .field(DeskDto.DESK_NAME)
+                                            .query(searchDeskArg.getQ())
+
+                                            .fuzziness("AUTO")
+                                    )
+                            )
+                            .minimumShouldMatch("1")
+                    )
+            );
+
+        }
+
+        Pageable pageable = PageRequest.of(skip / limit, limit);
+
+        NativeQuery nativeQuery = NativeQuery.builder()
+                .withQuery(searchQuery)
+                .withPageable(pageable)
+                .build();
+
+        SearchHits<DeskDto> searchHits = elasticsearchOperations.search(nativeQuery, DeskDto.class, DeskDto.DEFAULT_INDEX_COORDINATES);
+
+
+        return searchHits.getSearchHits().stream()
+                .map(hit -> hit.getContent())
+                .collect(Collectors.toList());
     }
 }

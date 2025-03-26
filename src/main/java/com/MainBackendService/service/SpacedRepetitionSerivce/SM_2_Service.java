@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 import static com.jooq.sample.model.tables.SpacedRepetition.SPACED_REPETITION;
 
@@ -28,12 +27,12 @@ public class SM_2_Service {
     public SpacedRepetitionRecord initSM_2_forFlashcard(int flashcardId) {
         // Check if a spaced repetition record already exists for the flashcard
         SpacedRepetition spacedRepetition = SPACED_REPETITION;
-        var existingRecord = dslContext.selectFrom(spacedRepetition)
+        SpacedRepetitionRecord spacedRepetitionRecord = dslContext.selectFrom(spacedRepetition)
                 .where(spacedRepetition.SPACED_REPETITION_FLASHCARD_ID.eq(flashcardId))
                 .fetchOne();
 
-        if (existingRecord != null) {
-            throw new IllegalArgumentException("Spaced repetition record already exists for Flashcard ID: " + flashcardId);
+        if (spacedRepetitionRecord != null) {
+            return spacedRepetitionRecord;
         }
 
         // Create a new spaced repetition record
@@ -87,14 +86,21 @@ public class SM_2_Service {
         spacedRepetitionRecord.setSpacedRepetitionInterval(interval);
         spacedRepetitionRecord.setSpacedRepetitionNextDay(nextDay);
 
+        spacedRepetitionRecord.update();
+
         return spacedRepetitionRecord;
     }
 
-    public Optional<SpacedRepetitionRecord> getSpacedRepetitionRecordBelongToFlashcardId(Integer flashcardId) {
-        return Optional.ofNullable(
-                dslContext.selectFrom(SPACED_REPETITION)
-                        .where(SPACED_REPETITION.SPACED_REPETITION_FLASHCARD_ID.eq(flashcardId))
-                        .fetchOne()
-        );
+    public SpacedRepetitionRecord getSpacedRepetitionRecordBelongToFlashcardId(Integer flashcardId) {
+        SpacedRepetitionRecord spacedRepetitionRecord = dslContext.selectFrom(SPACED_REPETITION)
+                .where(SPACED_REPETITION.SPACED_REPETITION_FLASHCARD_ID.eq(flashcardId))
+                .fetchOne();
+
+        if (spacedRepetitionRecord == null) {
+            spacedRepetitionRecord = initSM_2_forFlashcard(flashcardId);
+        }
+
+
+        return spacedRepetitionRecord;
     }
 }

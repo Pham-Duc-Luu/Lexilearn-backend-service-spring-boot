@@ -17,14 +17,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@RestController
+@RestController()
 @RequestMapping(path = "${apiPrefix}/auth")
 @Validated
 public class Auth {
@@ -173,7 +176,7 @@ public class Auth {
             if (existingUserOptional.isPresent()) {
                 // User exists, sign them in
                 UserRecord existUser = existingUserOptional.get();
-  
+
                 // Set access and refresh tokens for the existing user
                 accessToken = tokenService.setAccessToken(existUser);
                 refreshToken = tokenService.setRefreshToken(existUser);

@@ -1,6 +1,8 @@
 package com.MainBackendService.service;
 
 
+import com.MainBackendService.dto.AuthenticationDto.UserJWTObject;
+import com.MainBackendService.exception.HttpResponseException;
 import com.MainBackendService.utils.JwtUtil;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.jooq.sample.model.enums.UserTokenUtType;
@@ -76,17 +78,20 @@ public class TokenService {
 
     }
 
-    public String setAccessToken(UserRecord user) {
+    public String setAccessToken(UserRecord user) throws HttpResponseException {
 
-        return accessTokenJwtService.genToken(user.getUserName(), user.getUserEmail());
+        UserJWTObject userJWTObject = new UserJWTObject(user.getUserEmail(), user.getUserName(), user.getUserId().toString(), user.getUserUuid());
+
+        return accessTokenJwtService.genToken(userJWTObject);
     }
 
 
-    public String setRefreshToken(UserRecord user) {
+    public String setRefreshToken(UserRecord user) throws HttpResponseException {
+        UserJWTObject userJWTObject = new UserJWTObject(user.getUserEmail(), user.getUserName(), user.getUserId().toString(), user.getUserUuid());
 
         // * set the algorithm for the jwt token
         Algorithm algorithm = Algorithm.HMAC256(privateKey);
-        String refreshToken = refreshTokenJwtService.genToken(user.getUserName(), user.getUserEmail());
+        String refreshToken = refreshTokenJwtService.genToken(userJWTObject);
 
 
         // Step 1: Check if the user exists by email

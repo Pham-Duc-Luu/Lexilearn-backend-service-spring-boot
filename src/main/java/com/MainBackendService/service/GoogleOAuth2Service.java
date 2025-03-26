@@ -1,6 +1,5 @@
 package com.MainBackendService.service;
 
-import com.MainBackendService.controller.Auth.Auth;
 import com.MainBackendService.dto.GoogleUserInfoPayload;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -27,7 +26,7 @@ public class GoogleOAuth2Service {
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final String REDIRECT_URI = "postmessage"; // Match your frontend's redirect URI
     private static final String USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
-    Logger logger = LogManager.getLogger(Auth.class);
+    Logger logger = LogManager.getLogger(GoogleOAuth2Service.class);
     @Value("${spring.google.client.id}")
     private String CLIENT_ID;
     @Value("${spring.google.client.secret}")

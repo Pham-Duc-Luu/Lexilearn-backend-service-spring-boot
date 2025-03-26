@@ -2,7 +2,42 @@ type Query {
     getFlashcards(skip: Int = 0, limit: Int = 30, deskId: Int!): FlashcardPaginationResult
     getDesk(id: ID!): Desk
     getDesks(skip: Int = 0, limit: Int = 30, sort :DeskQuerySort ): DeskPaginationResult
-    getUserDesks(skip: Int = 0, limit: Int = 30, sort :DeskQuerySort, filter : DeskQueryFilter ): DeskPaginationResult
-    getUserDesk(id: ID!): Desk
+    getUserDesks(skip: Int = 0, limit: Int = 30, sort :DeskQuerySort, filter : DeskQueryFilter, searchArg :SearchDeskArg ): DeskPaginationResult
+
+
+    # get the flashcard in a desk
+    getDeskFlashcards(skip: Int = 0, limit: Int = 30, deskId: Int!) : FlashcardPaginationResult
+
+    # get the flashcard need to be review
+    getDeskNeedReviewFlashcard(skip: Int = 0, limit: Int = 30, deskId: Int!) : FlashcardPaginationResult
+
+    searchDesk(skip: Int = 0, limit: Int = 30, searchArg :SearchDeskArg):DeskPaginationResult
+
+    userPrivateSearchDesk(skip: Int = 0, limit: Int = 30, searchArg :SearchDeskArg):DeskPaginationResult
+
 }
 
+# Mutation definitions
+type Mutation {
+    # Create a single flashcard
+    createFlashcard(input: CreateFlashcardInput!): Flashcard!
+
+    # Update a single flashcard
+    updateFlashcard(input: UpdateFlashcardInput!): Flashcard!
+
+    # Update multiple flashcards
+    updateFlashcards(inputs: [UpdateFlashcardInput!]!): Int!
+
+    # update flashcards in desks
+    userPrivateUpdateDeskAndFlashcards(desk: UpdateDesk!, flashcards: [CreateOrUpdateFlashcardInput!]): Desk
+
+    # Create multiple flashcards
+    createFlashcards(inputs: [CreateFlashcardInput!]!): Int!
+
+    # re-order the flashcard in desk
+    newFlashcardOrder(inputs : [ID!]!, deskId : ID!) : [ID]
+
+    # delete a flashcard
+    deleteFlashcard(flashcardId: ID!, deskId: ID!): ID!
+
+}

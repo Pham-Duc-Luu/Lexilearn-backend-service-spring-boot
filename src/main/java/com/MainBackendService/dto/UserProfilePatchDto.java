@@ -9,6 +9,7 @@ public class UserProfilePatchDto {
     private String avatar;
     private String thumbnail;
 
+
     public String getThumbnail() {
         return thumbnail;
     }

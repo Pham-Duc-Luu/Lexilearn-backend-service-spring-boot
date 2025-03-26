@@ -3,18 +3,22 @@
 
     -- use dataase
     USE lexilearn_backend_database;
+
     -- Table: User
     CREATE TABLE User (
         user_id INT PRIMARY KEY AUTO_INCREMENT ,
         user_name VARCHAR(255) NOT NULL,
+        user_uuid CHAR(16) NOT NULL UNIQUE DEFAULT (UUID()), -- Add UUID
         user_email VARCHAR(255) NOT NULL UNIQUE,
         user_password VARCHAR(255) NOT NULL,
-         user_avatar TEXT,  -- Avatar URL stored as TEXT
-         user_thumbnail TEXT,  -- Thumbnail URL stored as TEXT
+        user_avatar TEXT,  -- Avatar URL stored as TEXT
+        user_thumbnail TEXT,  -- Thumbnail URL stored as TEXT
         user_provider  ENUM('GOOGLE', "FACEBOOK", "LOCAL"),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
+
+
 
     -- Table: User_Token
     CREATE TABLE User_Token (
@@ -35,9 +39,9 @@
         desk_status ENUM("PUBLISHED", "DRAFTED", "BIN"),
         desk_name VARCHAR(255),
         desk_is_public BOOLEAN,
-        desk_owner_id INT ,
+        desk_owner_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-         update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (desk_owner_id) REFERENCES User(user_id) ON DELETE CASCADE
     );
 
@@ -51,7 +55,7 @@
         vocab_desk_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY(vocab_desk_id) REFERENCES Desk(desk_id)  ON DELETE CASCADE
+        FOREIGN KEY(vocab_desk_id) REFERENCES Desk(desk_id) ON DELETE CASCADE
     );
 
     -- Table: Vocab_Example
@@ -75,11 +79,12 @@
         flashcard_back_sound TEXT,
         flashcard_back_text TEXT,
         flashcard_vocab_id INT NULL,
-        flashcard_desk_id INT NULL,
+        flashcard_desk_id INT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        flashcard_desk_position  INT NOT NULL DEFAULT 1,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (flashcard_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE,
-        FOREIGN KEY (flashcard_desk_id) REFERENCES Desk(desk_id) ON DELETE CASCADE
+        FOREIGN KEY (flashcard_desk_id) REFERENCES Desk(desk_id) ON DELETE CASCADE,
     );
 
   -- Table: Spaced_Repetition
@@ -96,3 +101,6 @@
       FOREIGN KEY (spaced_repetition_flashcard_id) REFERENCES Flashcard(flashcard_id) ON DELETE CASCADE -- Foreign key
   );
 
+
+
+    ALTER TABLE Flashcard ADD CONSTRAINT unique_flashcard_position UNIQUE (flashcard_desk_id, flashcard_desk_position);

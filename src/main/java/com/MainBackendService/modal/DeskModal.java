@@ -1,7 +1,11 @@
 package com.MainBackendService.modal;
 
+import com.MainBackendService.dto.DeskDto;
 import com.MainBackendService.dto.GraphqlDto.FlashcardPaginationResult;
 import com.jooq.sample.model.enums.DeskDeskStatus;
+import com.jooq.sample.model.tables.records.DeskRecord;
+
+import java.util.List;
 
 public class DeskModal {
     private final String thumbnail;
@@ -22,6 +26,34 @@ public class DeskModal {
     private String updatedAt;
     private DeskDeskStatus status;
     private FlashcardPaginationResult flashcardPaginationResult;
+    private List<FlashcardModal> flashcards;
+
+    public DeskModal(DeskDto deskDto) {
+        this.id = deskDto.getDeskId();
+        this.name = deskDto.getDeskName();
+        this.description = deskDto.getDeskDescription();
+        this.icon = deskDto.getDeskIcon();
+        this.isPublic = deskDto.getDeskIsPublic();
+        this.ownerId = String.valueOf(deskDto.getDeskOwnerId()); // Ensure type consistency
+        this.thumbnail = deskDto.getDeskThumbnail();
+        this.createdAt = deskDto.getCreatedAt();
+        this.updatedAt = deskDto.getUpdatedAt();
+        this.status = DeskDeskStatus.valueOf(deskDto.getDeskStatus());
+
+    }
+
+    public DeskModal(DeskRecord deskRecord) {
+        this.id = String.valueOf(deskRecord.getDeskId());
+        this.name = deskRecord.getDeskName();
+        this.description = deskRecord.getDeskDescription();
+        this.icon = deskRecord.getDeskIcon();
+        this.isPublic = deskRecord.getDeskIsPublic() == 1;
+        this.ownerId = String.valueOf(deskRecord.getDeskOwnerId()); // Ensure type consistency
+        this.thumbnail = deskRecord.getDeskThumbnail();
+        this.createdAt = String.valueOf(deskRecord.getCreatedAt());
+        this.updatedAt = String.valueOf(deskRecord.getUpdatedAt());
+        this.status = DeskDeskStatus.valueOf(deskRecord.getDeskStatus().toString());
+    }
 
     public DeskModal(String id, String name, String description, String icon, Boolean isPublic, String ownerId, String thumbnail, String createdAt, String updatedAt, DeskDeskStatus deskStatus) {
         this.id = id;
@@ -36,7 +68,6 @@ public class DeskModal {
         this.status = deskStatus;
     }
 
-
     public DeskModal(String id, String name, String description, String icon, Boolean isPublic, String ownerId, String thumbnail) {
         this.id = id;
         this.name = name;
@@ -45,6 +76,38 @@ public class DeskModal {
         this.isPublic = isPublic;
         this.ownerId = ownerId;
         this.thumbnail = thumbnail;
+    }
+
+    public List<FlashcardModal> getFlashcards() {
+        return flashcards;
+    }
+
+    public void setFlashcards(List<FlashcardModal> flashcards) {
+        this.flashcards = flashcards;
+    }
+
+    public DeskDeskStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(DeskDeskStatus status) {
+        this.status = status;
+    }
+
+    public String getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(String updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 
     public FlashcardPaginationResult getFlashcardPaginationResult() {

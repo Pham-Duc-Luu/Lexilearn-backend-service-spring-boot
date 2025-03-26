@@ -11,6 +11,17 @@ type Desk {
     createdAt: String
     updatedAt: String
     flashcardQuantity: Int
+    flashcards: [Flashcard]
+}
+
+input UpdateDesk{
+    id: ID!
+    name: String
+    description: String
+    icon: String
+    isPublic: Boolean
+    thumbnail: String
+    status: DeskStatus
 }
 
 enum DeskStatus {
@@ -45,4 +56,12 @@ type DeskPaginationResult {
     total: Int
     skip: Int
     limit: Int
+}
+
+
+
+input SearchDeskArg {
+    q: String
+    isRandom: Boolean = false
+    randomScore: String
 }
