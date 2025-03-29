@@ -14,7 +14,6 @@ public class SM_2_GQLService {
     private DSLContext dslContext;
 
     public SMModal getSpacedRepetitionWithFlashcardId(Integer flashcardId) {
-
         return dslContext.select(
                         SPACED_REPETITION.SPACED_REPETITION_ID.as("id"),
                         SPACED_REPETITION.SPACED_REPETITION_NAME.as("name"),

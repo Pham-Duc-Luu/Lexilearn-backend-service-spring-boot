@@ -4,7 +4,7 @@ import com.MainBackendService.dto.AccessTokenDetailsDto;
 import com.MainBackendService.dto.SuccessReponseDto;
 import com.MainBackendService.dto.UserProfileDto;
 import com.MainBackendService.dto.UserProfilePatchDto;
-import com.MainBackendService.service.UserService;
+import com.MainBackendService.service.UserService.UserService;
 import jakarta.validation.Valid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,12 +24,8 @@ public class UserProfileController {
 
     @GetMapping("")
     public ResponseEntity<?> getUserProfile(@Valid AccessTokenDetailsDto accessTokenDetailsDto) {
-
         Optional<UserProfileDto> userProfileDto = userService.getUserProfile(accessTokenDetailsDto.getEmail());
-
-
         return new ResponseEntity<>(new SuccessReponseDto<UserProfileDto>(userProfileDto.get()), HttpStatus.OK);
-
     }
 
     @PatchMapping()

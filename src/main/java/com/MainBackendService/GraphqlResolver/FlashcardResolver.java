@@ -7,13 +7,15 @@ import com.MainBackendService.dto.GraphqlDto.UpdateFlashcardInput;
 import com.MainBackendService.exception.HttpResponseException;
 import com.MainBackendService.exception.HttpUnauthorizedException;
 import com.MainBackendService.modal.FlashcardModal;
+import com.MainBackendService.modal.SMModal;
 import com.MainBackendService.service.AccessTokenJwtService;
 import com.MainBackendService.service.DeskService.DeskBelongToUserService;
 import com.MainBackendService.service.DeskService.DeskGQLService;
 import com.MainBackendService.service.DeskService.DeskService;
 import com.MainBackendService.service.FlashcardService.FlashcardGQLService;
 import com.MainBackendService.service.FlashcardService.FlashcardService;
-import com.MainBackendService.service.UserService;
+import com.MainBackendService.service.SpacedRepetitionSerivce.SM_2_GQLService;
+import com.MainBackendService.service.UserService.UserService;
 import com.MainBackendService.utils.HttpHeaderUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.netflix.graphql.dgs.*;
@@ -43,6 +45,9 @@ public class FlashcardResolver {
     private AccessTokenJwtService accessTokenJwtService;
 
     @Autowired
+    private SM_2_GQLService sm_2_gqlService;
+
+    @Autowired
     private DeskService deskService;
     @Autowired
     private FlashcardService flashcardService;
@@ -53,6 +58,7 @@ public class FlashcardResolver {
 
     @Autowired
     private UserService userService;
+
 
     @DgsMutation
     public FlashcardModal createFlashcard(@InputArgument CreateFlashcardInput input, DgsDataFetchingEnvironment dfe) throws HttpResponseException {
@@ -118,6 +124,12 @@ public class FlashcardResolver {
     @DgsQuery
     public FlashcardPaginationResult getFlashcards(Integer skip, Integer limit, Integer deskId) {
         return flashcardGQLService.getFlashcards(skip, limit, deskId);
+    }
+
+    @DgsData(parentType = "Flashcard", field = "SM")
+    public SMModal getSpacedRepetitionModal(DgsDataFetchingEnvironment dfe) {
+        FlashcardModal flashcardModal = dfe.getSource();
+        return sm_2_gqlService.getSpacedRepetitionWithFlashcardId(Integer.valueOf(flashcardModal.getId()));
     }
 
     @DgsMutation

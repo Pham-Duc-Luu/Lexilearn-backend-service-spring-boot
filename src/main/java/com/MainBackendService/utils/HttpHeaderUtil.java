@@ -7,7 +7,7 @@ import com.MainBackendService.exception.HttpResponseException;
 import com.MainBackendService.exception.HttpUnauthorizedException;
 import com.MainBackendService.service.AccessTokenJwtService;
 import com.MainBackendService.service.JwtClaims;
-import com.MainBackendService.service.UserService;
+import com.MainBackendService.service.UserService.UserService;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.jooq.sample.model.tables.records.UserRecord;

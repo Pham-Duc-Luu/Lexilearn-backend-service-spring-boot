@@ -5,4 +5,122 @@ type User {
     avatar: String
     thumbnail: String
     provider: String
+    avatarProperty : AvatarProperty
+}
+
+input ModifyUserProfileInput {
+    name: String
+    avatar: String
+    sex: Sex
+    faceColor: String
+    earSize: EarSize
+    eyeStyle: EyeStyle
+    noseStyle: NoseStyle
+    mouthStyle: MouthStyle
+    shirtStyle: ShirtStyle
+    glassesStyle: GlassesStyle
+    hairColor: String
+    hairStyle: HairStyle
+    hatStyle: HatStyle
+    hatColor: String
+    eyeBrowStyle: EyeBrowStyle
+    shirtColor: String
+    bgColor: String
+}
+
+input AvatarPropertyInput {
+    sex: Sex
+    faceColor: String
+    earSize: EarSize
+    eyeStyle: EyeStyle
+    noseStyle: NoseStyle
+    mouthStyle: MouthStyle
+    shirtStyle: ShirtStyle
+    glassesStyle: GlassesStyle
+    hairColor: String
+    hairStyle: HairStyle
+    hatStyle: HatStyle
+    hatColor: String
+    eyeBrowStyle: EyeBrowStyle
+    shirtColor: String
+    bgColor: String
+}
+
+
+type AvatarProperty {
+    sex: Sex
+    faceColor: String
+    earSize: EarSize
+    eyeStyle: EyeStyle
+    noseStyle: NoseStyle
+    mouthStyle: MouthStyle
+    shirtStyle: ShirtStyle
+    glassesStyle: GlassesStyle
+    hairColor: String
+    hairStyle: HairStyle
+    hatStyle: HatStyle
+    hatColor: String
+    eyeBrowStyle: EyeBrowStyle
+    shirtColor: String
+    bgColor: String
+}
+
+
+enum Sex {
+    MAN
+    WOMAN
+}
+
+enum EarSize {
+    SMALL
+    BIG
+}
+
+enum EyeStyle {
+    CIRCLE
+    OVAL
+    SMILE
+}
+
+enum NoseStyle {
+    SHORT
+    LONG
+    ROUND
+}
+
+enum MouthStyle {
+    LAUGH
+    SMILE
+    PEACE
+}
+
+enum ShirtStyle {
+    HOODY
+    SHORT
+    POLO
+}
+
+enum GlassesStyle {
+    ROUND
+    SQUARE
+    NONE
+}
+
+enum HairStyle {
+    NORMAL
+    THICK
+    MOHAWK
+    WOMAN_LONG
+    WOMAN_SHORT
+}
+
+enum HatStyle {
+    BEANIE
+    TURBAN
+    NONE
+}
+
+enum EyeBrowStyle {
+    UP
+    UP_WOMAN
 }

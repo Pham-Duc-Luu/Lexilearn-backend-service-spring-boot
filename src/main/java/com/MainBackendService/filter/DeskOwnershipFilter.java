@@ -2,7 +2,7 @@ package com.MainBackendService.filter;
 
 import com.MainBackendService.dto.HttpErrorDto;
 import com.MainBackendService.service.DeskService.DeskService;
-import com.MainBackendService.service.UserService;
+import com.MainBackendService.service.UserService.UserService;
 import com.jooq.sample.model.tables.records.UserRecord;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;

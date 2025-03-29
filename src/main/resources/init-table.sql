@@ -18,6 +18,30 @@
         update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE UserAvatar (
+        user_avatar_id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT NOT NULL UNIQUE, -- Foreign key to associate with a user
+        sex ENUM('man', 'woman') NOT NULL DEFAULT 'man',
+        face_color VARCHAR(7) NOT NULL DEFAULT '#ffffff', -- Default skin tone
+        ear_size ENUM('small', 'big') NOT NULL DEFAULT 'small',
+        hair_color VARCHAR(7) NOT NULL DEFAULT '#ffffff', -- Default hair color (black)
+        hair_style ENUM('normal', 'thick', 'mohawk', 'womanLong', 'womanShort') NOT NULL DEFAULT 'normal',
+        hat_color VARCHAR(7) NOT NULL DEFAULT '#ffffff', -- Default hat color (black)
+        hat_style ENUM('beanie', 'turban', 'none') NOT NULL DEFAULT 'none',
+        eye_brow ENUM('up', 'upWoman') NOT NULL DEFAULT 'up',
+        eye_style ENUM('circle', 'oval', 'smile') NOT NULL DEFAULT 'circle',
+        glasses_style ENUM('round', 'square', 'none') NOT NULL DEFAULT 'none',
+        nose_style ENUM('short', 'long', 'round') NOT NULL DEFAULT 'short',
+        mouth_style ENUM('laugh', 'smile', 'peace') NOT NULL DEFAULT 'smile',
+        shirt_style ENUM('hoody', 'short', 'polo') NOT NULL DEFAULT 'short',
+        shirt_color VARCHAR(7)  NOT NULL DEFAULT '#ffffff', -- Default shirt color
+        bg_color VARCHAR(7) NOT NULL DEFAULT '#ffffff', -- Default background color
+        gradient_bg_color TEXT, -- Default gradient
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_avatar_url TEXT,
+        FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
+    );
+
 
 
     -- Table: User_Token

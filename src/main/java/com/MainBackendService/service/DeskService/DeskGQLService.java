@@ -7,7 +7,7 @@ import com.MainBackendService.dto.GraphqlDto.DeskQueryFilter;
 import com.MainBackendService.dto.GraphqlDto.DeskQuerySort;
 import com.MainBackendService.dto.GraphqlDto.SearchDeskArg;
 import com.MainBackendService.modal.DeskModal;
-import com.MainBackendService.service.UserService;
+import com.MainBackendService.service.UserService.UserService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.*;

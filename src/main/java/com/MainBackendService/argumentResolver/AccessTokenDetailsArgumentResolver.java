@@ -1,7 +1,7 @@
 package com.MainBackendService.argumentResolver;
 
 import com.MainBackendService.dto.AccessTokenDetailsDto;
-import com.MainBackendService.service.UserService;
+import com.MainBackendService.service.UserService.UserService;
 import com.jooq.sample.model.tables.records.UserRecord;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;

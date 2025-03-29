@@ -1,14 +1,18 @@
-package com.MainBackendService.service;
+package com.MainBackendService.service.UserService;
 
+import com.MainBackendService.dto.GraphqlDto.AvatarDto;
+import com.MainBackendService.dto.GraphqlDto.ModifyUserProfileInput;
 import com.MainBackendService.dto.SignInDto;
 import com.MainBackendService.dto.SignUpDTO;
 import com.MainBackendService.dto.UserProfileDto;
 import com.MainBackendService.dto.UserProfilePatchDto;
+import com.MainBackendService.exception.HttpBadRequestException;
 import com.MainBackendService.modal.UserModal;
 import com.jooq.sample.model.enums.UserTokenUtType;
 import com.jooq.sample.model.enums.UserUserProvider;
 import com.jooq.sample.model.tables.records.UserRecord;
 import com.jooq.sample.model.tables.records.UserTokenRecord;
+import com.jooq.sample.model.tables.records.UseravatarRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
@@ -22,6 +26,7 @@ import java.util.Optional;
 
 import static com.jooq.sample.model.tables.User.USER;
 import static com.jooq.sample.model.tables.UserToken.USER_TOKEN;
+import static com.jooq.sample.model.tables.Useravatar.USERAVATAR;
 
 @Service
 public class UserService {
@@ -37,7 +42,6 @@ public class UserService {
 
         this.dslContext = dslContext;
     }
-
 
     public void resetPasswordWithOtp(String otp, String email, String password) {
         if (verifyOtp(email, otp)) {
@@ -190,6 +194,67 @@ public class UserService {
         return updatedProfile;
     }
 
+    public UserProfileDto updateUserProfile(Integer userId, ModifyUserProfileInput modifyUserProfileInput) throws HttpBadRequestException {
+
+        // * set up avatar property
+        AvatarDto avatarDto = new AvatarDto(
+                modifyUserProfileInput
+        );
+
+        // * update avatar property
+        updateUserAvatar(userId, avatarDto);
+
+        // Fetch the user record by email
+        UserRecord userRecord = dslContext.selectFrom(USER)
+                .where(USER.USER_ID.eq(userId))
+                .fetchOne();
+
+        if (userRecord == null) {
+            throw new IllegalArgumentException("User not found with the given id: " + userId);
+        }
+
+        // Update the fields based on UserProfilePatchDto
+        if (modifyUserProfileInput.getName() != null && !modifyUserProfileInput.getName().isEmpty()) {
+            userRecord.setUserName(modifyUserProfileInput.getName());
+        }
+
+        if (modifyUserProfileInput.getAvatar() != null) {
+            userRecord.setUserAvatar(modifyUserProfileInput.getAvatar());
+        }
+
+        // Update the user in the database
+        userRecord.store();
+
+        // Map updated UserRecord to UserProfileDto
+        UserProfileDto updatedProfile = new UserProfileDto();
+        updatedProfile.setId(String.valueOf(userRecord.getUserId()));
+        updatedProfile.setEmail(userRecord.getUserEmail());
+        updatedProfile.setName(userRecord.getUserName());
+        updatedProfile.setAvatar(userRecord.getUserAvatar());
+        updatedProfile.setThumbnail(userRecord.getUserThumbnail());
+
+        return updatedProfile;
+    }
+
+    public UserProfileDto updateUserAvatar(Integer userId, String publicUrl) {
+        UserRecord userRecord = dslContext.selectFrom(USER)
+                .where(USER.USER_ID.eq(userId))
+                .fetchOne();
+
+        userRecord.setUserAvatar(publicUrl);
+        userRecord.update();
+
+        // Map updated UserRecord to UserProfileDto
+        UserProfileDto updatedProfile = new UserProfileDto();
+        updatedProfile.setId(String.valueOf(userRecord.getUserId()));
+        updatedProfile.setEmail(userRecord.getUserEmail());
+        updatedProfile.setName(userRecord.getUserName());
+        updatedProfile.setAvatar(userRecord.getUserAvatar());
+        updatedProfile.setThumbnail(userRecord.getUserThumbnail());
+
+        return updatedProfile;
+
+    }
 
     public Optional<UserRecord> findUserByEmail(String email) {
         // Fetch the user record by email
@@ -217,4 +282,50 @@ public class UserService {
 
     }
 
+    public UseravatarRecord getUserAvatar(Integer userId) throws HttpBadRequestException {
+        UseravatarRecord useravatarRecord = dslContext.selectFrom(USERAVATAR).where(USERAVATAR.USER_ID.eq(userId)).fetchOne();
+        if (useravatarRecord != null) return useravatarRecord;
+
+        int inserted = dslContext.insertInto(USERAVATAR).set(USERAVATAR.USER_ID, userId).execute();
+        // Step 4: Return the created user record (or fetch it from the database)
+        if (inserted > 0) {
+            // Fetch the user record after insertion
+            return dslContext.selectFrom(USERAVATAR).where(USERAVATAR.USER_ID.eq(userId)).fetchOne();
+        } else {
+            throw new HttpBadRequestException("Failed to insert new avatar");
+        }
+    }
+
+    public AvatarDto updateUserAvatar(Integer userId, AvatarDto avatarDto) throws HttpBadRequestException {
+        UseravatarRecord useravatarRecord = getUserAvatar(userId);
+
+        logger.debug(avatarDto.getFaceColor());
+        // Update fields only if avatarDto values are not null
+        if (avatarDto.getSex() != null) useravatarRecord.setSex(avatarDto.getSex().getSex());
+        if (avatarDto.getFaceColor() != null) useravatarRecord.setFaceColor(avatarDto.getFaceColor());
+        if (avatarDto.getEarSize() != null) useravatarRecord.setEarSize(avatarDto.getEarSize().getEarSize());
+        if (avatarDto.getEyeStyle() != null) useravatarRecord.setEyeStyle(avatarDto.getEyeStyle().getEyeStyle());
+        if (avatarDto.getNoseStyle() != null) useravatarRecord.setNoseStyle(avatarDto.getNoseStyle().getNoseStyle());
+        if (avatarDto.getMouthStyle() != null)
+            useravatarRecord.setMouthStyle(avatarDto.getMouthStyle().getMouthStyle());
+        if (avatarDto.getShirtStyle() != null)
+            useravatarRecord.setShirtStyle(avatarDto.getShirtStyle().getShirtStyle());
+        if (avatarDto.getGlassesStyle() != null)
+            useravatarRecord.setGlassesStyle(avatarDto.getGlassesStyle().getGlassesStyle());
+        if (avatarDto.getHairColor() != null) useravatarRecord.setHairColor(avatarDto.getHairColor());
+        if (avatarDto.getHairStyle() != null) useravatarRecord.setHairStyle(avatarDto.getHairStyle().getHairStyle());
+        if (avatarDto.getHatStyle() != null) useravatarRecord.setHatStyle(avatarDto.getHatStyle().getHatStyle());
+        if (avatarDto.getHatColor() != null) useravatarRecord.setHatColor(avatarDto.getHatColor());
+        if (avatarDto.getEyeBrowStyle() != null)
+            useravatarRecord.setEyeBrow(avatarDto.getEyeBrowStyle().getEyeBrowStyle());
+        if (avatarDto.getShirtColor() != null) useravatarRecord.setShirtColor(avatarDto.getShirtColor());
+        if (avatarDto.getBgColor() != null) useravatarRecord.setBgColor(avatarDto.getBgColor());
+
+        int updatedRows = useravatarRecord.update();
+        if (updatedRows == 0) {
+            throw new HttpBadRequestException("Failed to update avatar");
+        }
+
+        return avatarDto;
+    }
 }

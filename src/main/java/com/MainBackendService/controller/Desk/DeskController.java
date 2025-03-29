@@ -11,7 +11,7 @@ import com.MainBackendService.dto.createDto.CreateFlashcardsDto;
 import com.MainBackendService.exception.HttpResponseException;
 import com.MainBackendService.service.DeskService.DeskService;
 import com.MainBackendService.service.FlashcardService.FlashcardService;
-import com.MainBackendService.service.UserService;
+import com.MainBackendService.service.UserService.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jooq.sample.model.tables.records.DeskRecord;
 import com.jooq.sample.model.tables.records.UserRecord;

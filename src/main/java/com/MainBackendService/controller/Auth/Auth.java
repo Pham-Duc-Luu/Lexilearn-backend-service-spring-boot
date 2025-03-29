@@ -4,7 +4,7 @@ import com.MainBackendService.dto.*;
 import com.MainBackendService.service.EmailService;
 import com.MainBackendService.service.GoogleOAuth2Service;
 import com.MainBackendService.service.TokenService;
-import com.MainBackendService.service.UserService;
+import com.MainBackendService.service.UserService.UserService;
 import com.MainBackendService.utils.Otp;
 import com.jooq.sample.model.enums.UserUserProvider;
 import com.jooq.sample.model.tables.records.UserRecord;

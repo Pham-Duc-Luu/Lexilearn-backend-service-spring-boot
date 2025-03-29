@@ -15,7 +15,7 @@ import com.MainBackendService.service.DeskService.DeskGQLService;
 import com.MainBackendService.service.DeskService.DeskService;
 import com.MainBackendService.service.FlashcardService.FlashcardGQLService;
 import com.MainBackendService.service.FlashcardService.FlashcardService;
-import com.MainBackendService.service.UserService;
+import com.MainBackendService.service.UserService.UserService;
 import com.MainBackendService.utils.HttpHeaderUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jooq.sample.model.tables.records.DeskRecord;
