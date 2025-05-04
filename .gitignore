@@ -40,3 +40,4 @@ build/
 *.env.*
 .env.local
 local.env
+testing-data.sql
