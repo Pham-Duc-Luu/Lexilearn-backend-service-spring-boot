@@ -8,20 +8,22 @@ import com.MainBackendService.service.UserService.UserService;
 import com.MainBackendService.utils.Otp;
 import com.jooq.sample.model.enums.UserUserProvider;
 import com.jooq.sample.model.tables.records.UserRecord;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,8 +44,11 @@ public class Auth {
     @Autowired
     private UserService userService;
 
+    @Value("${user.jwt.refresh-token.duration.in.hour}")
+    private long refreshTokenDuration;
+
     @PostMapping("/sign-up")
-    public ResponseEntity<?> signUp(@RequestBody @Valid SignUpDTO signUpDTO, BindingResult result) {
+    public ResponseEntity<?> signUp(@RequestBody @Valid SignUpDTO signUpDTO, BindingResult result, HttpServletResponse response) {
         try {
             if (result.hasErrors()) {
                 List<String> errorMessages = result.getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.toList());
@@ -57,9 +62,17 @@ public class Auth {
             // * set access and refresh token
             String accessToken = tokenService.setAccessToken(newUser);
             String refreshToken = tokenService.setRefreshToken(newUser);
-
+            // Set refresh token in HttpOnly cookie
+            ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge(Duration.ofHours(refreshTokenDuration))
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
             // Return success response
-            return new ResponseEntity<JwtAuthDto>(new JwtAuthDto(refreshToken, accessToken), HttpStatus.CREATED);
+            return new ResponseEntity<JwtAuthDto>(new JwtAuthDto("refreshToken", accessToken), HttpStatus.CREATED);
         } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage());
@@ -75,7 +88,7 @@ public class Auth {
     }
 
     @PostMapping("/sign-in")
-    public ResponseEntity<?> signIn(@Valid @RequestBody SignInDto signInDto) {
+    public ResponseEntity<?> signIn(@Valid @RequestBody SignInDto signInDto, HttpServletResponse response) {
         try {
 
             UserRecord existUser = userService.signIn(signInDto);
@@ -83,9 +96,18 @@ public class Auth {
             // * set access and refresh token
             String accessToken = tokenService.setAccessToken(existUser);
             String refreshToken = tokenService.setRefreshToken(existUser);
+            // Set refresh token in HttpOnly cookie
+            ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge(Duration.ofHours(refreshTokenDuration))
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
             // Return success response
-            return new ResponseEntity<JwtAuthDto>(new JwtAuthDto(refreshToken, accessToken), HttpStatus.CREATED);
+            return new ResponseEntity<JwtAuthDto>(new JwtAuthDto("refreshToken", accessToken), HttpStatus.CREATED);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -157,8 +179,9 @@ public class Auth {
         }
     }
 
+
     @PostMapping("/google/verify")
-    public ResponseEntity<?> verifyGoogleToken(@Valid @RequestBody GoogleTokenDto googleTokenDto) {
+    public ResponseEntity<?> verifyGoogleToken(@Valid @RequestBody GoogleTokenDto googleTokenDto, HttpServletResponse response) {
 
         try {
 
@@ -196,8 +219,19 @@ public class Auth {
                 accessToken = tokenService.setAccessToken(newUser);
                 refreshToken = tokenService.setRefreshToken(newUser);
             }
+
+            // Set refresh token in HttpOnly cookie
+            ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge(Duration.ofHours(refreshTokenDuration))
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
             // You can return the tokens as a response, or any other data you need
-            return new ResponseEntity<JwtAuthDto>(new JwtAuthDto(refreshToken, accessToken), HttpStatus.CREATED); // Assuming you have a response class
+            return new ResponseEntity<JwtAuthDto>(new JwtAuthDto("refreshToken", accessToken), HttpStatus.CREATED); // Assuming you have a response class
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -216,7 +250,12 @@ public class Auth {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> generateRefreshToken(@Valid @RequestBody JwtAuthDto jwtAuthDto) {
+    public ResponseEntity<?> generateRefreshToken(@Valid @RequestBody JwtAuthDto jwtAuthDto, @CookieValue(name = "refresh_token", required = false) String refreshToken) {
+
+        // * if the refresh_token exist in cookies the use it
+        if (refreshToken != null) {
+            jwtAuthDto.setRefresh_token(refreshToken);
+        }
 
         try {
             // Step 1: Find user associated with the provided refresh token
@@ -258,6 +297,23 @@ public class Auth {
                     ));
         }
 
+    }
+
+    @DeleteMapping("/log-out")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        // * remove refresh_token in cookies
+        // Overwrite the cookie with the same name, but expired
+        ResponseCookie deleteCookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0) // Immediately expire
+                .sameSite("Strict")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+
+        return ResponseEntity.ok("Logged outs");
     }
 
 }

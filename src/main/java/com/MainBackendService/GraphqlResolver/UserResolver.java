@@ -1,6 +1,7 @@
 package com.MainBackendService.GraphqlResolver;
 
 import com.MainBackendService.Microservice.ImageServerService.service.ImageServerClient;
+import com.MainBackendService.Microservice.ImageServerService.service.MediaService;
 import com.MainBackendService.dto.AccessTokenDetailsDto;
 import com.MainBackendService.dto.GraphqlDto.AvatarDto;
 import com.MainBackendService.dto.GraphqlDto.ModifyUserProfileInput;
@@ -44,13 +45,14 @@ public class UserResolver {
     private DeskGQLService deskGQLService;
     @Autowired
     private AccessTokenJwtService accessTokenJwtService;
+    @Autowired
+    private MediaService imageService;
 
     @Autowired
     private FlashcardService flashcardService;
 
     @Autowired
     private UserService userService;
-
 
     @DgsData(parentType = "User", field = "avatarProperty")
     public AvatarDto getAvatarDto(DgsDataFetchingEnvironment dfe) throws HttpResponseException, BadRequestException {
@@ -60,9 +62,9 @@ public class UserResolver {
 
         AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
         UseravatarRecord useravatarRecord = userService.getUserAvatar(userDetails.getId());
+
         return new AvatarDto(useravatarRecord);
     }
-
 
     @DgsQuery
     public UserProfileDto getUserProfile(DgsDataFetchingEnvironment dfe) throws HttpResponseException {
@@ -73,7 +75,8 @@ public class UserResolver {
         AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
 
         Optional<UserProfileDto> userProfileDto = userService.getUserProfile(userDetails.getEmail());
-        if (userProfileDto.isEmpty()) throw new HttpNotFoundException();
+        if (userProfileDto.isEmpty())
+            throw new HttpNotFoundException();
 
         // * check if the image url still alive
 
@@ -96,8 +99,8 @@ public class UserResolver {
                     // Extract filename (last part of the path)
                     String fileName = path.substring(path.lastIndexOf("/") + 1);
 
-                    return userService.updateUserAvatar(userDetails.getId(), imageServerClient.getUserImage(tokens.getFirst(), fileName).getPublicUrl());
-
+                    return userService.updateUserAvatar(userDetails.getId(),
+                            imageServerClient.getUserImage(tokens.getFirst(), fileName).getPublicUrl());
 
                 } catch (URISyntaxException e) {
                     return userProfileDto.get();
@@ -112,18 +115,18 @@ public class UserResolver {
     }
 
     @DgsMutation
-    public UserProfileDto updateUserProfile(@InputArgument ModifyUserProfileInput input, DgsDataFetchingEnvironment dfe) throws HttpResponseException {
+    public UserProfileDto updateUserProfile(@InputArgument ModifyUserProfileInput input, DgsDataFetchingEnvironment dfe)
+            throws HttpResponseException {
         DgsRequestData requestData = dfe.getDgsContext().getRequestData();
 
         List<String> tokens = requestData.getHeaders().get("Authorization");
 
         AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
-        logger.debug(input.getEarSize());
         userService.updateUserProfile(userDetails.getId(), input);
 
-
         Optional<UserProfileDto> userProfileDto = userService.getUserProfile(userDetails.getEmail());
-        if (userProfileDto.isEmpty()) throw new HttpNotFoundException();
+        if (userProfileDto.isEmpty())
+            throw new HttpNotFoundException();
         return userProfileDto.get();
     }
 }

@@ -1,67 +1,66 @@
 type Desk {
-    id: ID!
-    name: String
-    description: String
-    icon: String
-    isPublic: Boolean
-    ownerId: ID
-    thumbnail: String
-    owner: User
-    status: DeskStatus
-    createdAt: String
-    updatedAt: String
-    flashcardQuantity: Int
-    flashcards: [Flashcard]
+  id: ID!
+  name: String
+  description: String
+  icon: String
+  isPublic: Boolean
+  ownerId: ID
+  thumbnail: String
+  owner: User
+  status: DeskStatus
+  createdAt: String
+  updatedAt: String
+  flashcardQuantity: Int
+  flashcards: [Flashcard]
+  needToReviewFlashcardQuantity: Int
 }
 
-input UpdateDesk{
-    id: ID!
-    name: String
-    description: String
-    icon: String
-    isPublic: Boolean
-    thumbnail: String
-    status: DeskStatus
+input UpdateDesk {
+  id: ID!
+  name: String
+  description: String
+  icon: String
+  isPublic: Boolean
+  thumbnail: String
+  status: DeskStatus
 }
 
 enum DeskStatus {
-    PUBLISHED
-    DRAFTED
-    BIN
+  PUBLISHED
+  DRAFTED
+  BIN
 }
 
 enum SortOrder {
-    ASC
-    DESC
+  ASC
+  DESC
 }
 
-enum DeskSortField{
-    name
-    createdAt
-    updatedAt
+enum DeskSortField {
+  name
+  createdAt
+  updatedAt
 }
 
 input DeskQueryFilter {
-    isPublic: Boolean
-    status: DeskStatus
+  isPublic: Boolean
+  status: DeskStatus
 }
 
 input DeskQuerySort {
-    field: DeskSortField
-    order: SortOrder
+  field: DeskSortField
+  order: SortOrder
 }
 
 type DeskPaginationResult {
-    desks: [Desk]
-    total: Int
-    skip: Int
-    limit: Int
+  desks: [Desk]
+  total: Int
+  skip: Int
+  limit: Int
 }
 
-
-
 input SearchDeskArg {
-    q: String
-    isRandom: Boolean = false
-    randomScore: String
+  q: String
+  isRandom: Boolean = false
+  randomScore: String
 }

@@ -4,7 +4,7 @@ import com.MainBackendService.dto.GraphqlDto.CreateFlashcardInput;
 import com.MainBackendService.dto.GraphqlDto.UpdateFlashcardInput;
 
 public class FlashcardModal {
-    private String id;
+    private Integer id;
     private String front_image;
     private String front_text;
     private String front_sound;
@@ -16,7 +16,7 @@ public class FlashcardModal {
     private Integer desk_position;
     private SMModal SM; // Add this field
 
-    public FlashcardModal(String id, String front_image, String front_text, String front_sound, String back_image, String back_text, String back_sound, String created_at, String updated_at, Integer desk_position) {
+    public FlashcardModal(Integer id, String front_image, String front_text, String front_sound, String back_image, String back_text, String back_sound, String created_at, String updated_at, Integer desk_position) {
         this.id = id;
         this.front_image = front_image;
         this.front_text = front_text;
@@ -39,7 +39,10 @@ public class FlashcardModal {
     }
 
     public FlashcardModal(UpdateFlashcardInput updateFlashcardInput) {
-        this.id = updateFlashcardInput.getId().toString();
+
+
+        this.id = updateFlashcardInput.getId();
+
         this.front_image = updateFlashcardInput.getFront_image();
         this.front_text = updateFlashcardInput.getFront_text();
         this.front_sound = updateFlashcardInput.getFront_sound();
@@ -49,7 +52,7 @@ public class FlashcardModal {
     }
 
 
-    public FlashcardModal(String id, String front_image, String front_text, String front_sound, String back_image, String back_text, String back_sound, String created_at, String updated_at) {
+    public FlashcardModal(Integer id, String front_image, String front_text, String front_sound, String back_image, String back_text, String back_sound, String created_at, String updated_at) {
         this.id = id;
         this.front_image = front_image;
         this.front_text = front_text;
@@ -77,11 +80,11 @@ public class FlashcardModal {
         this.SM = SM;
     }
 
-    public String getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

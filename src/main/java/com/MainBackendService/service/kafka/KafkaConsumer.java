@@ -29,33 +29,15 @@ public class KafkaConsumer {
 
     public KafkaConsumer(ElasticsearchOperations elasticsearchOperations) {
         this.elasticsearchOperations = elasticsearchOperations;
-
-        logger.debug("init KafkaConsumer");
-
     }
 
-    // Initialize the index on application startup
-
-//    @PostConstruct
-//    public void initializeIndex() {
-//        IndexOperations indexOperations = elasticsearchOperations.indexOps(IndexCoordinates.of(deskIndexName));
-//        if (!indexOperations.exists()) {
-//            logger.info("Creating index: {}", deskIndexName);
-//            indexOperations.create();
-//            // Optionally add mappings for DeskDto if needed
-//            indexOperations.putMapping(indexOperations.createMapping(DeskDto.class));
-//            logger.info("Index {} created successfully.", deskIndexName);
-//        } else {
-//            logger.info("Index {} already exists.", deskIndexName);
-//        }
-//    }
 
     @KafkaListener(
             topicPartitions = @TopicPartition(topic = "${kafka.topic.lexilearn.desk}",
                     partitionOffsets = {
                             @PartitionOffset(partition = "0", initialOffset = "0")}
             ),
-            concurrency = "1" // Ensures only one message is processed at a time
+            concurrency = "1" // Ensures  x message is processed at a time
     )
     public void consume(@Payload String message) throws IOException {
         // Print statement

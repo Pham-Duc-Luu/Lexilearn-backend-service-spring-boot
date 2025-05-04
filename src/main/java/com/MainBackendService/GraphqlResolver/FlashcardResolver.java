@@ -1,5 +1,6 @@
 package com.MainBackendService.GraphqlResolver;
 
+import com.MainBackendService.Microservice.ImageServerService.service.MediaService;
 import com.MainBackendService.dto.AccessTokenDetailsDto;
 import com.MainBackendService.dto.GraphqlDto.CreateFlashcardInput;
 import com.MainBackendService.dto.GraphqlDto.FlashcardPaginationResult;
@@ -27,8 +28,10 @@ import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
@@ -41,6 +44,7 @@ public class FlashcardResolver {
     private FlashcardGQLService flashcardGQLService;
     @Autowired
     private DeskGQLService deskGQLService;
+
     @Autowired
     private AccessTokenJwtService accessTokenJwtService;
 
@@ -51,7 +55,12 @@ public class FlashcardResolver {
     private DeskService deskService;
     @Autowired
     private FlashcardService flashcardService;
+    @Autowired
+    private MediaService imageService;
 
+
+    @Autowired
+    private MediaService audioService;
 
     @Autowired
     private DSLContext dslContext;
@@ -129,7 +138,7 @@ public class FlashcardResolver {
     @DgsData(parentType = "Flashcard", field = "SM")
     public SMModal getSpacedRepetitionModal(DgsDataFetchingEnvironment dfe) {
         FlashcardModal flashcardModal = dfe.getSource();
-        return sm_2_gqlService.getSpacedRepetitionWithFlashcardId(Integer.valueOf(flashcardModal.getId()));
+        return sm_2_gqlService.getSpacedRepetitionWithFlashcardId(flashcardModal.getId());
     }
 
     @DgsMutation
@@ -180,7 +189,20 @@ public class FlashcardResolver {
     @DgsQuery
     public FlashcardPaginationResult getDeskNeedReviewFlashcard(@InputArgument Integer skip,
                                                                 @InputArgument Integer limit,
-                                                                @InputArgument Integer deskId) throws HttpResponseException, JsonProcessingException {
+                                                                @InputArgument Integer deskId, DgsDataFetchingEnvironment dfe) throws HttpResponseException, JsonProcessingException {
+
+
+        DgsRequestData requestData = dfe.getDgsContext().getRequestData();
+
+        List<String> tokens = requestData.getHeaders().get("Authorization");
+
+        AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
+
+        // * check if user can query this or not
+        if (!deskService.isUserOwnerOfDesk(userDetails.getId(), deskId)) {
+            throw new HttpUnauthorizedException("You are not allow to view need-to-review-flashcard of this desk");
+        }
+
         // Step 1: Fetch ordered flashcards from DeskService
         List<FlashcardModal> flashcardRecords = flashcardService.getNeedToReviewFlashcards(deskId, FlashcardModal.class);
         // Step 2: Apply pagination
@@ -191,10 +213,43 @@ public class FlashcardResolver {
         if (effectiveSkip >= flashcardRecords.size()) {
             return new FlashcardPaginationResult(null, flashcardRecords.size(), effectiveSkip, effectiveLimit);
         }
+
         // Calculate sublist bounds
         int fromIndex = effectiveSkip;
         int toIndex = Math.min(fromIndex + effectiveLimit, flashcardRecords.size());
         List<FlashcardModal> flashcardModals = flashcardRecords.subList(fromIndex, toIndex);
+
+
+        // * query media file for s3
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        for (FlashcardModal flashcard : flashcardModals) {
+            // Front image
+            futures.add(imageService.getPresignUrlAsync(flashcard.getFront_image(), tokens.getFirst())
+                    .thenAccept(url -> flashcard.setFront_image(url)));
+
+            // Back image
+            futures.add(imageService.getPresignUrlAsync(flashcard.getBack_image(), tokens.getFirst())
+                    .thenAccept(url -> flashcard.setBack_image(url)));
+
+            // Front sound
+            futures.add(audioService.getPresignUrlAsync(flashcard.getFront_sound(), tokens.getFirst())
+                    .thenAccept(url -> flashcard.setFront_sound(url)));
+
+            // Back sound
+            futures.add(audioService.getPresignUrlAsync(flashcard.getBack_sound(), tokens.getFirst())
+                    .thenAccept(url -> flashcard.setBack_sound(url)));
+        }
+// Wait for all to complete (with timeout logic if needed)
+        CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        try {
+            all.get(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("Timeout or failure while fetching presigned URLs", e);
+        }
+
         // Step 4: Return FlashcardPaginationResult
         return new FlashcardPaginationResult(
                 flashcardModals,          // Paginated list

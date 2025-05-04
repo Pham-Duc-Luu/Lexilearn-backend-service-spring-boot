@@ -3,6 +3,8 @@ package com.MainBackendService.service.SpacedRepetitionSerivce;
 import com.jooq.sample.model.enums.SpacedRepetitionSpacedRepetitionName;
 import com.jooq.sample.model.tables.SpacedRepetition;
 import com.jooq.sample.model.tables.records.SpacedRepetitionRecord;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import static com.jooq.sample.model.tables.SpacedRepetition.SPACED_REPETITION;
 @Service
 public class SM_2_Service {
 
+    Logger logger = LogManager.getLogger(SM_2_Service.class);
     @Autowired
     private DSLContext dslContext;
 
@@ -57,29 +60,30 @@ public class SM_2_Service {
         double interval = spacedRepetitionRecord.getSpacedRepetitionInterval();
         LocalDate nextDay = spacedRepetitionRecord.getSpacedRepetitionNextDay();
 
-        if (grade >= 3) {
-            // Update the interval and next review date
-            if (count == 1) {
-                interval = 1; // For the first review, the interval is 1 day
-            } else if (count == 2) {
-                interval = 6; // After the second review, the interval is 6 days
-            } else {
-                interval = interval * easinessFactor; // Update the interval with the easiness factor
-            }
-        } else {
-            interval = 1;
-
-        }
-
 
         // Adjust easiness factor based on the grade (0 to 5)
         easinessFactor = easinessFactor + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
         if (easinessFactor < 1.3) {
             easinessFactor = 1.3; // Enforce a minimum easiness factor
         }
+        logger.debug(grade);
+
+        if (grade >= 3) {
+            // Update the interval and next review date
+            if (count == 0) {
+                interval = 1; // For the first review, the interval is 1 day
+            } else if (count == 1) {
+                interval = 2; // After the second review, the interval is 2 days
+            } else {
+                interval = interval * easinessFactor; // Update the interval with the easiness factor
+            }
+        } else {
+            interval = 1;
+        }
 
         // Update next review date
         nextDay = LocalDate.now().plusDays((long) interval);
+
         // Store the updated values in the record
         spacedRepetitionRecord.setSpacedRepetitionCount(count + 1);
         spacedRepetitionRecord.setSpacedRepetitionEasinessFactor(easinessFactor);

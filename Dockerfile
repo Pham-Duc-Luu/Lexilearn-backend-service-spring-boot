@@ -1,27 +1,20 @@
-# Stage 1: Build the application
-FROM maven:3.9.4-eclipse-temurin-21-alpine AS build
+# Use an official OpenJDK image as the base
+FROM openjdk:21-jdk-slim
+
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy the pom.xml and local.env file
-COPY pom.xml .
-COPY local.env .
+# Copy the JAR file built by Maven
+COPY target/*.jar app.jar
 
-# Export environment variables from local.env
-RUN export $(cat local.env | xargs) 
-RUN mvn clean install
+# Copy your environment file (optional, if you use it inside container)
+# COPY local.env .
 
-# Copy the source code
-COPY src ./src
-
-# Stage 2: Run the application
-FROM eclipse-temurin:21-alpine
-WORKDIR /app
-
-# Copy the built application from the first stage
-COPY --from=build /app/target/Lexilearn-0.0.1-SNAPSHOT.jar ./application.jar
-
-# Expose the application port
+# Expose the port the app runs on (Spring Boot default is 8080)
 EXPOSE 5001
 
-# Run the application
-CMD ["java", "-jar", "application.jar"]
+# Set environment variables from local.env (if needed inside Docker)
+# ENV $(cat local.env | xargs)
+
+# Run the JAR file
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -8,6 +8,8 @@ import com.jooq.sample.model.tables.Flashcard;
 import com.jooq.sample.model.tables.Vocab;
 import com.jooq.sample.model.tables.records.FlashcardRecord;
 import com.jooq.sample.model.tables.records.SpacedRepetitionRecord;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Result;
@@ -25,6 +27,7 @@ import static com.jooq.sample.model.tables.Flashcard.FLASHCARD;
 
 @Service
 public class FlashcardService {
+    Logger logger = LogManager.getLogger(FlashcardService.class);
 
 
     ObjectMapper objectMapper = new ObjectMapper();
@@ -187,7 +190,7 @@ public class FlashcardService {
 
         // Find the existing flashcard record
         FlashcardRecord flashcardRecord = dslContext.selectFrom(flashcard)
-                .where(flashcard.FLASHCARD_ID.eq(Integer.valueOf(flashcardModal.getId())))
+                .where(flashcard.FLASHCARD_ID.eq(flashcardModal.getId()))
                 .fetchOne();
 
         if (flashcardRecord == null) {
@@ -209,7 +212,7 @@ public class FlashcardService {
 
         // Return the updated flashcard data
         return new FlashcardModal(
-                String.valueOf(flashcardRecord.getFlashcardId()),
+                flashcardRecord.getFlashcardId(),
                 flashcardRecord.getFlashcardFrontImage(),
                 flashcardRecord.getFlashcardFrontText(),
                 flashcardRecord.getFlashcardFrontSound(),
@@ -256,7 +259,7 @@ public class FlashcardService {
                         flashcard.UPDATED_AT.as("updatedAt")
                 ).from(FLASHCARD)
                 .where(condition)
-                .orderBy(FLASHCARD.FLASHCARD_DESK_ID.asc())
+                .orderBy(FLASHCARD.FLASHCARD_DESK_POSITION.asc())
                 .fetchInto(FlashcardModal.class);
     }
 
@@ -313,11 +316,24 @@ public class FlashcardService {
         return flashcardModalList.stream()
                 .filter(flashcardRecord -> {
                     SpacedRepetitionRecord spacedRepetitionRecord =
-                            sm_2_service.getSpacedRepetitionRecordBelongToFlashcardId(Integer.valueOf(flashcardRecord.getId()));
+                            sm_2_service.getSpacedRepetitionRecordBelongToFlashcardId(flashcardRecord.getId());
 
                     return !spacedRepetitionRecord.getSpacedRepetitionNextDay().isAfter(today);
                 })
                 .toList(); // Converts the filtered stream into a List
+    }
+
+    public void updateFlashcardFrontImageUrl(Integer flashcardId, String url) {
+        dslContext.update(FLASHCARD).set(FLASHCARD.FLASHCARD_FRONT_IMAGE, url).where(FLASHCARD.FLASHCARD_ID.eq(flashcardId)).execute();
+    }
+
+    public void updateFlashcardFrontSoundUrl(Integer flashcardId, String url) {
+        dslContext.update(FLASHCARD).set(FLASHCARD.FLASHCARD_FRONT_SOUND, url).where(FLASHCARD.FLASHCARD_ID.eq(flashcardId)).execute();
+    }
+
+
+    public void updateFlashcardBackImageUrl(Integer flashcardId, String url) {
+        dslContext.update(FLASHCARD).set(FLASHCARD.FLASHCARD_BACK_IMAGE, url).where(FLASHCARD.FLASHCARD_ID.eq(flashcardId)).execute();
     }
 
 

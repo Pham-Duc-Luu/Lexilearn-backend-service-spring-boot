@@ -31,18 +31,14 @@ public class AccessTokenFilter implements Filter {
     );
     private final List<Pattern> excludedUrlPatterns = List.of(
             Pattern.compile("/api/v1/auth/.*")
-           , Pattern.compile("/api/v1/graphql/.*")
+            , Pattern.compile("/api/v1/graphql/.*")
 
     );
-    private final AccessTokenJwtService accessTokenJwtService;
-    @Autowired
-    HttpHeaderUtil httpHeaderUtil;
     Logger logger = LogManager.getLogger(AccessTokenFilter.class);
-
     @Autowired
-    public AccessTokenFilter(AccessTokenJwtService accessTokenJwtService) {
-        this.accessTokenJwtService = accessTokenJwtService;
-    }
+    private HttpHeaderUtil httpHeaderUtil;
+    @Autowired
+    private AccessTokenJwtService accessTokenJwtService;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {

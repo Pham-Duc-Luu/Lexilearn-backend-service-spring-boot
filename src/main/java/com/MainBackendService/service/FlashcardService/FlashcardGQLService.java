@@ -95,7 +95,7 @@ public class FlashcardGQLService {
         flashcardRecord.store();
         // Return the created flashcard data
         return new FlashcardModal(
-                String.valueOf(flashcardRecord.getFlashcardId()),
+                flashcardRecord.getFlashcardId(),
                 flashcardRecord.getFlashcardFrontImage(),
                 flashcardRecord.getFlashcardFrontText(),
                 flashcardRecord.getFlashcardFrontSound(),
@@ -133,7 +133,7 @@ public class FlashcardGQLService {
 
         // Return the updated flashcard data
         return new FlashcardModal(
-                String.valueOf(flashcardRecord.getFlashcardId()),
+                flashcardRecord.getFlashcardId(),
                 flashcardRecord.getFlashcardFrontImage(),
                 flashcardRecord.getFlashcardFrontText(),
                 flashcardRecord.getFlashcardFrontSound(),

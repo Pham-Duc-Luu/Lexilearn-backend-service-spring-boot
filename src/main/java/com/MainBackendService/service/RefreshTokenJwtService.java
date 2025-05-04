@@ -2,6 +2,7 @@ package com.MainBackendService.service;
 
 import com.MainBackendService.dto.AuthenticationDto.UserJWTObject;
 import com.MainBackendService.exception.HttpResponseException;
+import com.MainBackendService.utils.KeyLoader;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -13,6 +14,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -21,14 +24,37 @@ public class RefreshTokenJwtService {
     Logger logger = LogManager.getLogger(RefreshTokenJwtService.class);
     // * set the algorithm for the jwt token
     Algorithm algorithm;
-    @Value("${private.key}")
-    private String privateKey;
-    @Value("${private.time}")
-    private String privateTime;
+    @Value("${user.jwt.refresh-token.private-key.path}")
+    private String privateKeyPath;
+
+    @Value("${user.jwt.refresh-token.public-key.path}")
+    private String publicKeyPath;
+
+
+    @Value("${user.jwt.refresh-token.duration.in.hour}")
+    private String tokenDurationInHour;
+
+    @Value("${user.jwt.refresh-token.algorithm}")
+    private String jwtAlgorithm;
 
     @PostConstruct
-    public void initAlgorithm() {
-        this.algorithm = Algorithm.HMAC256(privateKey);
+    public void initAlgorithm() throws Exception {
+
+        // Load RSA keys from the resources folder
+        RSAPrivateKey privateKey = KeyLoader.loadPrivateKey(privateKeyPath);
+        RSAPublicKey publicKey = KeyLoader.loadPublicKey(publicKeyPath);
+
+        switch (jwtAlgorithm) {
+            case "RSA256":
+                this.algorithm = Algorithm.RSA256(publicKey, privateKey);
+            case "RSA384":
+                this.algorithm = Algorithm.RSA384(publicKey, privateKey);
+            case "RSA512":
+                this.algorithm = Algorithm.RSA512(publicKey, privateKey);
+            default:
+                this.algorithm = Algorithm.RSA256(publicKey, privateKey);
+
+        }
     }
 
     @Deprecated
@@ -37,7 +63,7 @@ public class RefreshTokenJwtService {
         String refreshToken = JWT.create()
                 .withClaim(JwtClaims.USER_EMAIL.getClaimName(), user_email)
                 .withClaim(JwtClaims.USER_NAME.getClaimName(), user_name)
-                .withIssuedAt(Instant.now()).withExpiresAt(Instant.now().plus(Duration.ofHours(Long.parseLong(privateTime))))
+                .withIssuedAt(Instant.now()).withExpiresAt(Instant.now().plus(Duration.ofHours(Long.parseLong(tokenDurationInHour))))
                 .sign(algorithm);
         return refreshToken;
     }
@@ -47,7 +73,7 @@ public class RefreshTokenJwtService {
                 .withClaim(JwtClaims.User.getClaimName(), userJWTObject.toJson())
                 .withClaim(JwtClaims.USER_EMAIL.getClaimName(), userJWTObject.getUser_email())
                 .withClaim(JwtClaims.USER_NAME.getClaimName(), userJWTObject.getUser_email())
-                .withIssuedAt(Instant.now()).withExpiresAt(Instant.now().plus(Duration.ofHours(Long.parseLong(privateTime))))
+                .withIssuedAt(Instant.now()).withExpiresAt(Instant.now().plus(Duration.ofHours(Long.parseLong(tokenDurationInHour))))
                 .sign(algorithm);
 
         return refreshToken;
@@ -59,7 +85,6 @@ public class RefreshTokenJwtService {
             JWTVerifier verifier = JWT.require(algorithm).build();
 
             DecodedJWT decodedJWT = verifier.verify(jwtToken);
-
             return decodedJWT;
         } catch (JWTVerificationException e) {
             e.printStackTrace();

@@ -93,26 +93,38 @@ public class userPrivateResolver {
 
 
         // * update or create flashcard
-        List<String> updatedFlashcardIdList = new ArrayList<>();
+        List<Integer> updatedFlashcardIdList = new ArrayList<Integer>();
 
         for (int i = 0; i < flashcards.size(); i++) {
             FlashcardModal flashcardModal = new FlashcardModal(flashcards.get(i));
             flashcardModal.setDesk_position(i + 1);
 
             if (flashcardModal.getId() == null) {
-                updatedFlashcardIdList.add(flashcardService.createFlashcard(Integer.valueOf(desk.getId()), flashcardModal).getFlashcardId().toString());
+                updatedFlashcardIdList.add(flashcardService.createFlashcard(Integer.valueOf(desk.getId()), flashcardModal).getFlashcardId());
             } else {
                 updatedFlashcardIdList.add(flashcardService.updateFlashcard(flashcardModal).getId());
             }
-
         }
 
         // * remove other flashcards that is not in the update list
-        List<Integer> flashcardIds = flashcardService.getFlashcardsInDesk(Integer.valueOf(desk.getId())).stream().map(i -> i.getFlashcardId()).toList();
-        flashcardIds.removeAll(updatedFlashcardIdList);
-        flashcardIds.stream().forEach(id -> {
-            flashcardService.deleteFlashcard(Integer.valueOf(desk.getId()), id);
-        });
+        List<Integer> allFlashcardIds =
+                flashcardService.getFlashcardsInDesk(Integer.valueOf(desk.getId()))
+                        .stream()
+                        .map(i -> i.getFlashcardId())
+                        .toList();
+
+        for (int i = 0; i < allFlashcardIds.size(); i++) {
+            Integer id = allFlashcardIds.get(i);
+            if (!updatedFlashcardIdList.contains(id)) {
+                flashcardService.deleteFlashcard(Integer.valueOf(desk.getId()), id);
+            }
+        }
+//
+
+//        flashcardIds.removeAll(updatedFlashcardIdList);
+//        flashcardIds.stream().forEach(id -> {
+//            flashcardService.deleteFlashcard(Integer.valueOf(desk.getId()), id);
+//        });
         // * update desk
         DeskDto updatedDesk = new DeskDto(desk);
 
