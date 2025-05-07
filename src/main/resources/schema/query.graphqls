@@ -3,24 +3,19 @@ type Query {
     getDesk(id: ID!): Desk
     getDesks(skip: Int = 0, limit: Int = 30, sort :DeskQuerySort ): DeskPaginationResult
     getUserDesks(skip: Int = 0, limit: Int = 30, sort :DeskQuerySort, filter : DeskQueryFilter, searchArg :SearchDeskArg ): DeskPaginationResult
-
-
+    
     # get the flashcard in a desk
     getDeskFlashcards(skip: Int = 0, limit: Int = 30, deskId: Int!) : FlashcardPaginationResult
-
     # get the flashcard need to be review
     getDeskNeedReviewFlashcard(skip: Int = 0, limit: Int = 30, deskId: Int!) : FlashcardPaginationResult
-
     searchDesk(skip: Int = 0, limit: Int = 30, searchArg :SearchDeskArg):DeskPaginationResult
-
     userPrivateSearchDesk(skip: Int = 0, limit: Int = 30, searchArg :SearchDeskArg):DeskPaginationResult
-
     getUserProfile: User
-
 }
 
 # Mutation definitions
 type Mutation {
+
     # Create a single flashcard
     createFlashcard(input: CreateFlashcardInput!): Flashcard!
 
@@ -43,5 +38,4 @@ type Mutation {
     deleteFlashcard(flashcardId: ID!, deskId: ID!): ID!
 
     updateUserProfile(input: ModifyUserProfileInput!) : User
-
 }
