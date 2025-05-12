@@ -1,9 +1,15 @@
 package MainBackendService.dto;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
 public class JwtAuthDto {
+
     private String refresh_token;
+    
     @NotNull
     private String access_token;
 

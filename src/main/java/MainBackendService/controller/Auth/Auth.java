@@ -250,10 +250,17 @@ public class Auth {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> generateRefreshToken(@Valid @RequestBody JwtAuthDto jwtAuthDto, @CookieValue(name = "refresh_token", required = false) String refreshToken) {
+    public ResponseEntity<?> generateRefreshToken(@RequestBody(required = false) JwtAuthDto jwtAuthDto,
+                                                  @CookieValue(name = "refresh_token", required = false) String refreshToken,
+                                                  HttpServletResponse response) {
+
+        if (jwtAuthDto == null) {
+            jwtAuthDto = new JwtAuthDto();
+        }
 
         // * if the refresh_token exist in cookies the use it
         if (refreshToken != null) {
+
             jwtAuthDto.setRefresh_token(refreshToken);
         }
 
@@ -273,8 +280,19 @@ public class Auth {
             // Step 2: Generate a new access token
             String newAccessToken = tokenService.setAccessToken(user);
 
+            // Step 3 : refresh token in HttpOnly cookie
+            ResponseCookie cookie = ResponseCookie.from("refresh_token", jwtAuthDto.getRefresh_token())
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge(Duration.ofHours(refreshTokenDuration))
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+
             // Step 3: Return the new access token
-            return ResponseEntity.ok(new JwtAuthDto(jwtAuthDto.getRefresh_token(), newAccessToken));
+            return ResponseEntity.ok(new JwtAuthDto("refresh_token", newAccessToken));
         } catch (IllegalArgumentException e) {
             // Handle token-related issues
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

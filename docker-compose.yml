@@ -1,6 +1,6 @@
 services:
   spring-app:
-    image: lexilearn-pring-boot-main
+    image: lexilearn-spring-boot-main
     container_name: lexilearn-spring-boot-main-container
     network_mode: host
 

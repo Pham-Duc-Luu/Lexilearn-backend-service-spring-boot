@@ -1,11 +1,7 @@
 package MainBackendService.config;
 
+import java.util.List;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import co.elastic.clients.util.ContentType;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponseInterceptor;
@@ -19,7 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.util.ContentType;
 
 @Configuration
 public class ElasticsearchConfig {
@@ -28,16 +28,6 @@ public class ElasticsearchConfig {
     private String elasticsearchHost;
     @Value("${elasticsearch.port}")
     private String elasticsearchPort;
-
-//    @Bean
-//    public RestClient getRestClient() {
-//        return RestClient
-//                .builder(new HttpHost(elasticsearchHost, Integer.parseInt(elasticsearchPort)))
-//                .setDefaultHeaders(new Header[]{
-//                        new BasicHeader("Content-type", "application/json")
-//                })
-//                .build();
-//    }
 
     @Bean
     public RestClient getRestClient() {
@@ -49,9 +39,8 @@ public class ElasticsearchConfig {
                     httpClientBuilder.setDefaultHeaders(List.of(
                             new BasicHeader(
                                     HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON)));
-                    httpClientBuilder.addInterceptorLast((HttpResponseInterceptor)
-                            (response, context) ->
-                                    response.addHeader("X-Elastic-Product", "Elasticsearch"));
+                    httpClientBuilder.addInterceptorLast((HttpResponseInterceptor) (response, context) -> response
+                            .addHeader("X-Elastic-Product", "Elasticsearch"));
                     return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
                 }).build();
     }

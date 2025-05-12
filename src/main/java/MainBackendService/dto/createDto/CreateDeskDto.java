@@ -15,7 +15,7 @@ public class CreateDeskDto {
     private String deskDescription;
     private String deskThumbnail;
     private String deskIcon;
-    private Boolean deskIsPublic;
+    private Boolean deskIsPublic = false;
     private Integer deskOwnerId; // Assuming this is the user ID of the
 
     public CreateDeskDto() {

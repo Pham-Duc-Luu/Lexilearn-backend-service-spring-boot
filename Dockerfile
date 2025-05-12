@@ -5,7 +5,7 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copy the JAR file built by Maven
-COPY target/*.jar app.jar
+COPY target/Lexilearn-0.0.1-SNAPSHOT.jar app.jar
 
 # Copy your environment file (optional, if you use it inside container)
 # COPY local.env .

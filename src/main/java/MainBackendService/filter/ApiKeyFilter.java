@@ -1,6 +1,5 @@
 package MainBackendService.filter;
 
-import MainBackendService.controller.hello;
 import MainBackendService.dto.HttpErrorDto;
 import MainBackendService.utils.HttpHeaderUtil;
 import jakarta.servlet.*;
@@ -29,7 +28,7 @@ public class ApiKeyFilter implements Filter {
 
     @Autowired
     HttpHeaderUtil httpHeaderUtil;
-    Logger logger = LogManager.getLogger(hello.class);
+    Logger logger = LogManager.getLogger(ApiKeyFilter.class);
     // Your predefined API key (store this securely in a real application)
     @Value("${api.key}")
     private String VALID_API_KEY;

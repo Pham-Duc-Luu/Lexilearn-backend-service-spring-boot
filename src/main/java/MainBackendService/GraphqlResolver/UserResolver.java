@@ -23,10 +23,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
@@ -80,37 +78,22 @@ public class UserResolver {
 
         // * check if the image url still alive
 
+
+        // Extract the path from the URL
         try {
-            URL url = new URL(userProfileDto.get().getAvatar());
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("HEAD"); // HEAD request to check without downloading
-            int responseCode = connection.getResponseCode();
+            URI uri = new URI(userProfileDto.get().getAvatar());
+            String path = uri.getPath();
 
-            if (responseCode == 200) {
-                // * image url still valid
-                return userProfileDto.get();
+            // Extract filename (last part of the path)
+            String fileName = path.substring(path.lastIndexOf("/") + 1);
 
-            } else {
-                // Extract the path from the URL
-                try {
-                    URI uri = new URI(userProfileDto.get().getAvatar());
-                    String path = uri.getPath();
+            return userService.updateUserAvatar(userDetails.getId(),
+                    imageServerClient.getUserImage(tokens.getFirst(), fileName).getPublicUrl());
 
-                    // Extract filename (last part of the path)
-                    String fileName = path.substring(path.lastIndexOf("/") + 1);
-
-                    return userService.updateUserAvatar(userDetails.getId(),
-                            imageServerClient.getUserImage(tokens.getFirst(), fileName).getPublicUrl());
-
-                } catch (URISyntaxException e) {
-                    return userProfileDto.get();
-                }
-            }
-
-        } catch (Exception e) {
-            // * image url still valid
+        } catch (URISyntaxException e) {
             return userProfileDto.get();
         }
+
 
     }
 
