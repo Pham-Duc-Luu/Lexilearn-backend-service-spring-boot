@@ -1,6 +1,7 @@
 package MainBackendService.GraphqlResolver;
 
-import MainBackendService.Microservice.ImageServerService.service.MediaService;
+import MainBackendService.Microservice.ImageServerService.service.AudioService;
+import MainBackendService.Microservice.ImageServerService.service.ImageService;
 import MainBackendService.dto.AccessTokenDetailsDto;
 import MainBackendService.dto.DeskDto;
 import MainBackendService.dto.GraphqlDto.DeskPaginationResult;
@@ -57,12 +58,10 @@ public class DeskResolver {
     private UserService userService;
 
     @Autowired
-    @Qualifier("imageService")
-    private MediaService imageService;
+    private ImageService imageService;
 
     @Autowired
-    @Qualifier("imageService")
-    private MediaService audioService;
+    private AudioService audioService;
 
     /**
      * GraphQL query resolver for fetching the list of desks with pagination.

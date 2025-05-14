@@ -10,8 +10,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.CompletableFuture;
 
-@Service("audioService")
-public class AudioService implements MediaService {
+@Service
+public class AudioService {
     Logger logger = LogManager.getLogger(AudioService.class);
     @Autowired
     private AudioServiceClient audioServiceClient;

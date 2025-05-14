@@ -1,7 +1,7 @@
 package MainBackendService.GraphqlResolver;
 
 import MainBackendService.Microservice.ImageServerService.service.ImageServerClient;
-import MainBackendService.Microservice.ImageServerService.service.MediaService;
+import MainBackendService.Microservice.ImageServerService.service.ImageService;
 import MainBackendService.dto.AccessTokenDetailsDto;
 import MainBackendService.dto.GraphqlDto.AvatarDto;
 import MainBackendService.dto.GraphqlDto.ModifyUserProfileInput;
@@ -44,7 +44,7 @@ public class UserResolver {
     @Autowired
     private AccessTokenJwtService accessTokenJwtService;
     @Autowired
-    private MediaService imageService;
+    private ImageService imageService;
 
     @Autowired
     private FlashcardService flashcardService;
@@ -73,11 +73,17 @@ public class UserResolver {
         AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
 
         Optional<UserProfileDto> userProfileDto = userService.getUserProfile(userDetails.getEmail());
+
+
         if (userProfileDto.isEmpty())
             throw new HttpNotFoundException();
 
         // * check if the image url still alive
+        String avatar = userProfileDto.get().getAvatar();
 
+        if (avatar == null || avatar.isBlank()) {
+            return userProfileDto.get(); // Or handle the missing avatar case more appropriately
+        }
 
         // Extract the path from the URL
         try {
@@ -87,13 +93,22 @@ public class UserResolver {
             // Extract filename (last part of the path)
             String fileName = path.substring(path.lastIndexOf("/") + 1);
 
-            return userService.updateUserAvatar(userDetails.getId(),
-                    imageServerClient.getUserImage(tokens.getFirst(), fileName).getPublicUrl());
+            String presignedAvatarUrl = imageServerClient.getUserImage(tokens.getFirst(), fileName).getPublicUrl();
+
+            if (presignedAvatarUrl == null) {
+                return userProfileDto.get();
+            }
+            
+            userService.updateUserAvatarUrl(userDetails.getId(), presignedAvatarUrl);
+            userProfileDto.get().setAvatar(presignedAvatarUrl);
+
 
         } catch (URISyntaxException e) {
             return userProfileDto.get();
         }
 
+
+        return userProfileDto.get();
 
     }
 

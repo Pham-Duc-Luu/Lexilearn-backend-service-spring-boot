@@ -1,18 +1,21 @@
 package MainBackendService.Microservice.ImageServerService.service;
 
+import MainBackendService.Microservice.ImageServerService.dto.ImageDto;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.CompletableFuture;
 
-@Service("imageService")
-public class ImageService implements MediaService {
-    Logger logger = LogManager.getLogger(AudioService.class);
+
+@Service
+public class ImageService {
+    Logger logger = LogManager.getLogger(ImageService.class);
 
     @Autowired
     private ImageServerClient imageServerClient;
@@ -59,6 +62,10 @@ public class ImageService implements MediaService {
 //            return true;
 //        }
         return true;
+    }
+
+    public ImageDto uploadImage(MultipartFile file, String authorizationHeader) {
+        return imageServerClient.uploadImage(authorizationHeader, file);
     }
 
     @Async

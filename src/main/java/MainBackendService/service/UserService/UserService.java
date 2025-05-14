@@ -31,6 +31,7 @@ import static com.jooq.sample.model.tables.Useravatar.USERAVATAR;
 @Service
 public class UserService {
 
+    @Autowired
     private final DSLContext dslContext;
 
     Logger logger = LogManager.getLogger(UserService.class);
@@ -218,9 +219,10 @@ public class UserService {
             userRecord.setUserName(modifyUserProfileInput.getName());
         }
 
-        if (modifyUserProfileInput.getAvatar() != null) {
-            userRecord.setUserAvatar(modifyUserProfileInput.getAvatar());
-        }
+        // ! don't modify user's avatar here
+//        if (modifyUserProfileInput.getAvatar() != null) {
+//            userRecord.setUserAvatar(modifyUserProfileInput.getAvatar());
+//        }
 
         // Update the user in the database
         userRecord.store();
@@ -230,7 +232,8 @@ public class UserService {
         updatedProfile.setId(String.valueOf(userRecord.getUserId()));
         updatedProfile.setEmail(userRecord.getUserEmail());
         updatedProfile.setName(userRecord.getUserName());
-        updatedProfile.setAvatar(userRecord.getUserAvatar());
+        // ! don't modify user's avatar here
+        // updatedProfile.setAvatar(userRecord.getUserAvatar());
         updatedProfile.setThumbnail(userRecord.getUserThumbnail());
 
         return updatedProfile;
@@ -253,8 +256,18 @@ public class UserService {
         updatedProfile.setThumbnail(userRecord.getUserThumbnail());
 
         return updatedProfile;
-
     }
+
+    public void updateUserAvatarUrl(Integer userId, String publicUrl) throws HttpBadRequestException {
+        int updatedRows = dslContext.update(USER)
+                .set(USER.USER_AVATAR, publicUrl)
+                .where(USER.USER_ID.eq(userId))
+                .execute();
+        if (updatedRows == 0) {
+            throw new HttpBadRequestException("Failed to update avatar URL for user ID: " + userId);
+        }
+    }
+
 
     public Optional<UserRecord> findUserByEmail(String email) {
         // Fetch the user record by email

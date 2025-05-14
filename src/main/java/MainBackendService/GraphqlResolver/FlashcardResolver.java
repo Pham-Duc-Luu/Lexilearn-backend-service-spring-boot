@@ -1,6 +1,7 @@
 package MainBackendService.GraphqlResolver;
 
-import MainBackendService.Microservice.ImageServerService.service.MediaService;
+import MainBackendService.Microservice.ImageServerService.service.AudioService;
+import MainBackendService.Microservice.ImageServerService.service.ImageService;
 import MainBackendService.dto.AccessTokenDetailsDto;
 import MainBackendService.dto.GraphqlDto.CreateFlashcardInput;
 import MainBackendService.dto.GraphqlDto.FlashcardPaginationResult;
@@ -56,11 +57,11 @@ public class FlashcardResolver {
     @Autowired
     private FlashcardService flashcardService;
     @Autowired
-    private MediaService imageService;
+    private ImageService imageService;
 
 
     @Autowired
-    private MediaService audioService;
+    private AudioService audioService;
 
     @Autowired
     private DSLContext dslContext;
