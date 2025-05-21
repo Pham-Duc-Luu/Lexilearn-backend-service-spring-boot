@@ -65,7 +65,7 @@
         desk_is_public BOOLEAN,
         desk_owner_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (desk_owner_id) REFERENCES User(user_id) ON DELETE CASCADE
     );
 

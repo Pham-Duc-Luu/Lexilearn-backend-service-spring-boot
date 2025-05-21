@@ -1,9 +1,13 @@
 package MainBackendService.Microservice.ImageServerService.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 public class UserImageDTO {
 
     @JsonProperty("id")
@@ -56,92 +60,5 @@ public class UserImageDTO {
         this.cloudProvider = cloudProvider;
     }
 
-    // Getters and Setters
-    public String getId() {
-        return id;
-    }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getUserUUID() {
-        return userUUID;
-    }
-
-    public void setUserUUID(String userUUID) {
-        this.userUUID = userUUID;
-    }
-
-    public String getPublicUrl() {
-        return publicUrl;
-    }
-
-    public void setPublicUrl(String publicUrl) {
-        this.publicUrl = publicUrl;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public Long getFileSize() {
-        return fileSize;
-    }
-
-    public void setFileSize(Long fileSize) {
-        this.fileSize = fileSize;
-    }
-
-    public String getFormat() {
-        return format;
-    }
-
-    public void setFormat(String format) {
-        this.format = format;
-    }
-
-    public Integer getWidth() {
-        return width;
-    }
-
-    public void setWidth(Integer width) {
-        this.width = width;
-    }
-
-    public Integer getHeight() {
-        return height;
-    }
-
-    public void setHeight(Integer height) {
-        this.height = height;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getExpireAt() {
-        return expireAt;
-    }
-
-    public void setExpireAt(LocalDateTime expireAt) {
-        this.expireAt = expireAt;
-    }
-
-    public String getCloudProvider() {
-        return cloudProvider;
-    }
-
-    public void setCloudProvider(String cloudProvider) {
-        this.cloudProvider = cloudProvider;
-    }
 }

@@ -93,12 +93,12 @@ public class UserResolver {
             // Extract filename (last part of the path)
             String fileName = path.substring(path.lastIndexOf("/") + 1);
 
-            String presignedAvatarUrl = imageServerClient.getUserImage(tokens.getFirst(), fileName).getPublicUrl();
+            String presignedAvatarUrl = imageServerClient.getUserImage(tokens.getFirst(), fileName).getUrl();
 
             if (presignedAvatarUrl == null) {
                 return userProfileDto.get();
             }
-            
+
             userService.updateUserAvatarUrl(userDetails.getId(), presignedAvatarUrl);
             userProfileDto.get().setAvatar(presignedAvatarUrl);
 

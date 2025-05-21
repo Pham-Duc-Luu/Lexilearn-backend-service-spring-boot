@@ -41,7 +41,7 @@ public class ImageService {
             return url;
         }
 
-        return imageServerClient.getUserImage(authorizationHeader, filename).getPublicUrl();
+        return imageServerClient.getUserImage(authorizationHeader, filename).getUrl();
 
     }
 
@@ -82,7 +82,7 @@ public class ImageService {
             String filename = getFileNameFromUrl(url);
             if (filename == null) return CompletableFuture.completedFuture(url);
 
-            String newUrl = imageServerClient.getUserImage(authorizationHeader, filename).getPublicUrl();
+            String newUrl = imageServerClient.getUserImage(authorizationHeader, filename).getUrl();
             return CompletableFuture.completedFuture(newUrl);
 
         } catch (Exception e) {
