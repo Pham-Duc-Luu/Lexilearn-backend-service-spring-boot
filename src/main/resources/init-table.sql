@@ -8,7 +8,7 @@
     CREATE TABLE User (
         user_id INT PRIMARY KEY AUTO_INCREMENT ,
         user_name VARCHAR(255) NOT NULL,
-        user_uuid CHAR(16) NOT NULL UNIQUE DEFAULT (UUID()), -- Add UUID
+        user_uuid CHAR(32) NOT NULL UNIQUE DEFAULT (UUID()), -- Add UUID
         user_email VARCHAR(255) NOT NULL UNIQUE,
         user_password VARCHAR(255) NOT NULL,
         user_avatar TEXT,  -- Avatar URL stored as TEXT
