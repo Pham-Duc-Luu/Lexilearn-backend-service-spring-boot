@@ -3,7 +3,7 @@ type Query {
     getDesk(id: ID!): Desk
     getDesks(skip: Int = 0, limit: Int = 30, sort :DeskQuerySort ): DeskPaginationResult
     getUserDesks(skip: Int = 0, limit: Int = 30, sort :DeskQuerySort, filter : DeskQueryFilter, searchArg :SearchDeskArg ): DeskPaginationResult
-    
+
     # get the flashcard in a desk
     getDeskFlashcards(skip: Int = 0, limit: Int = 30, deskId: Int!) : FlashcardPaginationResult
     # get the flashcard need to be review
@@ -26,7 +26,11 @@ type Mutation {
     updateFlashcards(inputs: [UpdateFlashcardInput!]!): Int!
 
     # update flashcards in desks
-    userPrivateUpdateDeskAndFlashcards(desk: UpdateDesk!, flashcards: [CreateOrUpdateFlashcardInput!]): Desk
+    #    userPrivateUpdateDeskAndFlashcards(desk: UpdateDesk!, flashcards: [CreateOrUpdateFlashcardInput!]): Desk
+
+    # upsert flashcards in desks
+    upsertFlashcards( flashcards: [UpsertFlashcardInput!]): Desk
+
 
     # Create multiple flashcards
     createFlashcards(inputs: [CreateFlashcardInput!]!): Int!

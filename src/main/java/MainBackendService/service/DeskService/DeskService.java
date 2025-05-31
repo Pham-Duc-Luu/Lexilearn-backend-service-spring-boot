@@ -201,6 +201,7 @@ public class DeskService {
                 .fetchOne(0, int.class);
     }
 
+    
     // * return true if the user own the desk, false otherwise
     public boolean isUserOwnerOfDesk(Integer userId, Integer deskId) {
         // Query the Desk table to check if the desk exists and the user is the owner
@@ -208,6 +209,7 @@ public class DeskService {
                 .from(DESK)
                 .where(DESK.DESK_ID.eq(deskId))  // Match by deskId
                 .fetchOne(DESK.DESK_OWNER_ID);  // Fetch the owner ID of the desk
+
 
         // Check if the fetched ownerId matches the provided userId
         return ownerId != null && ownerId.equals(userId);

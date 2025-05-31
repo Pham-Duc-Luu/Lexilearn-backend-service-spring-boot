@@ -2,7 +2,12 @@ package MainBackendService.modal;
 
 import MainBackendService.dto.GraphqlDto.CreateFlashcardInput;
 import MainBackendService.dto.GraphqlDto.UpdateFlashcardInput;
+import com.jooq.sample.model.tables.records.FlashcardRecord;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
 public class FlashcardModal {
     private Integer id;
     private String front_image;
@@ -13,8 +18,9 @@ public class FlashcardModal {
     private String back_sound;
     private String created_at;
     private String updated_at;
-    private Integer desk_position;
+    private Integer next_flashcard_id;
     private SMModal SM; // Add this field
+
 
     public FlashcardModal(Integer id, String front_image, String front_text, String front_sound, String back_image, String back_text, String back_sound, String created_at, String updated_at, Integer desk_position) {
         this.id = id;
@@ -26,7 +32,6 @@ public class FlashcardModal {
         this.back_sound = back_sound;
         this.created_at = created_at;
         this.updated_at = updated_at;
-        this.desk_position = desk_position;
     }
 
     public FlashcardModal(CreateFlashcardInput createFlashcardInput) {
@@ -40,7 +45,6 @@ public class FlashcardModal {
 
     public FlashcardModal(UpdateFlashcardInput updateFlashcardInput) {
 
-
         this.id = updateFlashcardInput.getId();
 
         this.front_image = updateFlashcardInput.getFront_image();
@@ -50,7 +54,6 @@ public class FlashcardModal {
         this.back_text = updateFlashcardInput.getBack_text();
         this.back_sound = updateFlashcardInput.getBack_sound();
     }
-
 
     public FlashcardModal(Integer id, String front_image, String front_text, String front_sound, String back_image, String back_text, String back_sound, String created_at, String updated_at) {
         this.id = id;
@@ -64,91 +67,58 @@ public class FlashcardModal {
         this.updated_at = updated_at;
     }
 
-    public Integer getDesk_position() {
-        return desk_position;
+    public FlashcardModal(FlashcardRecord flashcardRecord) {
+        this.id = flashcardRecord.getFlashcardId();
+        this.front_image = flashcardRecord.getFlashcardFrontImage();
+        this.front_text = flashcardRecord.getFlashcardFrontText();
+        this.front_sound = flashcardRecord.getFlashcardFrontSound();
+        this.back_image = flashcardRecord.getFlashcardBackImage();
+        this.back_text = flashcardRecord.getFlashcardBackText();
+        this.back_sound = flashcardRecord.getFlashcardBackSound();
+        this.created_at = flashcardRecord.getCreatedAt() != null ? flashcardRecord.getCreatedAt().toString() : null;
+        this.updated_at = flashcardRecord.getUpdatedAt() != null ? flashcardRecord.getUpdatedAt().toString() : null;
+        this.next_flashcard_id = flashcardRecord.getNextFlashcardId();
+        this.SM = null; // You can populate this later if needed
     }
 
-    public void setDesk_position(Integer desk_position) {
-        this.desk_position = desk_position;
+    public FlashcardModal mapFromFlashcardRecord(FlashcardRecord flashcardRecord) {
+        FlashcardModal modal = new FlashcardModal();
+
+        modal.setId(flashcardRecord.getFlashcardId());
+        modal.setFront_image(flashcardRecord.getFlashcardFrontImage());
+        modal.setFront_text(flashcardRecord.getFlashcardFrontText());
+        modal.setFront_sound(flashcardRecord.getFlashcardFrontSound());
+        modal.setBack_image(flashcardRecord.getFlashcardBackImage());
+        modal.setBack_text(flashcardRecord.getFlashcardBackText());
+        modal.setBack_sound(flashcardRecord.getFlashcardBackSound());
+        modal.setCreated_at(flashcardRecord.getCreatedAt() != null ? flashcardRecord.getCreatedAt().toString() : null);
+        modal.setUpdated_at(flashcardRecord.getUpdatedAt() != null ? flashcardRecord.getUpdatedAt().toString() : null);
+        modal.setNext_flashcard_id(flashcardRecord.getNextFlashcardId());
+        return modal;
     }
 
-    public SMModal getSM() {
-        return SM;
+    public FlashcardRecord mapToFlashcardRecord() {
+        FlashcardRecord record = new FlashcardRecord();
+        record.setFlashcardId(this.id);
+        record.setFlashcardFrontImage(this.front_image);
+        record.setFlashcardFrontText(this.front_text);
+        record.setFlashcardFrontSound(this.front_sound);
+        record.setFlashcardBackImage(this.back_image);
+        record.setFlashcardBackText(this.back_text);
+        record.setFlashcardBackSound(this.back_sound);
+        record.setNextFlashcardId(this.next_flashcard_id);
+
+        // If your table has created_at/updated_at as `LocalDateTime`
+        if (this.created_at != null) {
+            record.setCreatedAt(java.time.LocalDateTime.parse(this.created_at));
+        }
+
+        if (this.updated_at != null) {
+            record.setUpdatedAt(java.time.LocalDateTime.parse(this.updated_at));
+        }
+
+        return record;
+
     }
 
-    public void setSM(SMModal SM) {
-        this.SM = SM;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getFront_image() {
-        return front_image;
-    }
-
-    public void setFront_image(String front_image) {
-        this.front_image = front_image;
-    }
-
-    public String getFront_text() {
-        return front_text;
-    }
-
-    public void setFront_text(String front_text) {
-        this.front_text = front_text;
-    }
-
-    public String getFront_sound() {
-        return front_sound;
-    }
-
-    public void setFront_sound(String front_sound) {
-        this.front_sound = front_sound;
-    }
-
-    public String getBack_image() {
-        return back_image;
-    }
-
-    public void setBack_image(String back_image) {
-        this.back_image = back_image;
-    }
-
-    public String getBack_text() {
-        return back_text;
-    }
-
-    public void setBack_text(String back_text) {
-        this.back_text = back_text;
-    }
-
-    public String getBack_sound() {
-        return back_sound;
-    }
-
-    public void setBack_sound(String back_sound) {
-        this.back_sound = back_sound;
-    }
-
-    public String getCreated_at() {
-        return created_at;
-    }
-
-    public void setCreated_at(String created_at) {
-        this.created_at = created_at;
-    }
-
-    public String getUpdated_at() {
-        return updated_at;
-    }
-
-    public void setUpdated_at(String updated_at) {
-        this.updated_at = updated_at;
-    }
 }

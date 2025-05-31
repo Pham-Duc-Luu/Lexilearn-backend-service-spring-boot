@@ -48,3 +48,21 @@ input  UpdateFlashcardInput{
     back_text: String
     back_sound: String
 }
+
+enum OperationType {
+    CREATE
+    DELETE
+    UPDATE
+}
+
+input UpsertFlashcardInput {
+    id: ID
+    desk_id: ID!
+    front_image: String
+    front_text: String
+    front_sound: String
+    back_image: String
+    back_text: String
+    back_sound: String
+    operation: OperationType
+}

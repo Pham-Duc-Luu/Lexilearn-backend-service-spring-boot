@@ -62,35 +62,16 @@
         desk_icon TEXT,
         desk_status ENUM("PUBLISHED", "DRAFTED", "BIN"),
         desk_name VARCHAR(255),
-        desk_is_public BOOLEAN,
+        desk_is_public BOOLEAN default FALSE,
         desk_owner_id INT,
+        desk_start_flashcard_id INT default NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (desk_owner_id) REFERENCES User(user_id) ON DELETE CASCADE
+        FOREIGN KEY (desk_start_flashcard_id) REFERENCES Flashcard(flashcard_id) ON DELETE CASCADE
+
     );
 
-    -- Table: Vocab
-    CREATE TABLE Vocab (
-        vocab_id INT PRIMARY KEY AUTO_INCREMENT,
-        vocab_language VARCHAR(255),
-        vocab_meaning VARCHAR(255),
-        vocab_image TEXT,
-        vocab_text VARCHAR(255),
-        vocab_desk_id INT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY(vocab_desk_id) REFERENCES Desk(desk_id) ON DELETE CASCADE
-    );
-
-    -- Table: Vocab_Example
-    CREATE TABLE Vocab_Example (
-        VE_id INT PRIMARY KEY AUTO_INCREMENT,
-        VE_text TEXT,
-        VE_vocab_id INT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (VE_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE
-    );
 
     CREATE INDEX idx_user_email ON User(user_email);
     -- Table: Flashcard
@@ -102,13 +83,13 @@
         flashcard_back_image TEXT,
         flashcard_back_sound TEXT,
         flashcard_back_text TEXT,
-        flashcard_vocab_id INT NULL,
         flashcard_desk_id INT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        flashcard_desk_position  INT NOT NULL DEFAULT 1,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (flashcard_vocab_id) REFERENCES Vocab(vocab_id) ON DELETE CASCADE,
+        next_flashcard_id INT DEFAULT NULL,
+
         FOREIGN KEY (flashcard_desk_id) REFERENCES Desk(desk_id) ON DELETE CASCADE,
+        FOREIGN KEY (next_flashcard_id) REFERENCES Flashcard(flashcard_id) ON DELETE SET NULL,
     );
 
   -- Table: Spaced_Repetition

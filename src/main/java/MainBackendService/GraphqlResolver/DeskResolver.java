@@ -112,7 +112,6 @@ public class DeskResolver {
     public List<FlashcardModal> flashcards(DgsDataFetchingEnvironment dfe)
             throws HttpResponseException, JsonProcessingException {
         DeskModal deskModal = dfe.getSource();
-        logger.debug(deskModal.getId());
 
         if (deskModal.getId() == null)
             return null;
@@ -171,7 +170,6 @@ public class DeskResolver {
 
         AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
 
-        // Call DeskGQLService to fetch the paginated desks
 
         if (searchArg == null)
             return deskGQLService.getDeskByUserId(userDetails.getId(), skip, limit, sort, filter);

@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.jooq.sample.model.tables.Flashcard.FLASHCARD;
+
 @Service
 public class FlashcardGQLService {
 
@@ -49,29 +51,22 @@ public class FlashcardGQLService {
                 .where(flashcard.FLASHCARD_DESK_ID.eq(deskId))
                 .fetchOne(0, int.class);
 
-        List<FlashcardModal> flashcards = dslContext.select(
-                        flashcard.FLASHCARD_ID.as("id"),
-                        flashcard.FLASHCARD_FRONT_IMAGE.as("frontImage"),
-                        flashcard.FLASHCARD_FRONT_TEXT.as("frontText"),
-                        flashcard.FLASHCARD_FRONT_SOUND.as("frontSound"),
-                        flashcard.FLASHCARD_BACK_IMAGE.as("backImage"),
-                        flashcard.FLASHCARD_BACK_TEXT.as("backText"),
-                        flashcard.FLASHCARD_BACK_SOUND.as("backSound"),
-                        flashcard.CREATED_AT.as("createdAt"),
-                        flashcard.UPDATED_AT.as("updatedAt")
-                )
-                .from(flashcard)
+        List<FlashcardRecord> flashcards = dslContext.selectFrom(FLASHCARD)
                 .where(flashcard.FLASHCARD_DESK_ID.eq(deskId))
                 .offset(skip != null ? skip : 0)
                 .limit(limit != null ? limit : 30)
-                .fetchInto(FlashcardModal.class);
-        // Populate SM field
-        for (FlashcardModal flashcardItem : flashcards) {
-            SMModal sm = sm_2_gqlService.getSpacedRepetitionWithFlashcardId(Integer.valueOf(flashcardItem.getId()));
-            flashcardItem.setSM(sm);
-        }
+                .fetch();
+    
 
-        return new FlashcardPaginationResult(flashcards, total, skip, limit);
+        List<FlashcardModal> flashcardModalList = flashcards.stream().map(item -> {
+            FlashcardModal flashcardModal = new FlashcardModal(item);
+            SMModal sm = sm_2_gqlService.getSpacedRepetitionWithFlashcardId(flashcardModal.getId());
+            flashcardModal.setSM(sm);
+
+            return flashcardModal;
+        }).toList();
+
+        return new FlashcardPaginationResult(flashcardModalList, total, skip, limit);
     }
 
     public FlashcardModal createFlashcard(CreateFlashcardInput input) {
@@ -88,7 +83,6 @@ public class FlashcardGQLService {
         flashcardRecord.setFlashcardBackSound(input.getBack_sound());
         flashcardRecord.setFlashcardBackText(input.getBack_text());
         flashcardRecord.setCreatedAt(LocalDateTime.now());
-        flashcardRecord.setFlashcardDeskPosition(flashcardService.getFlashcardQuantityInDesk(input.getDesk_id()) + 1);
         flashcardRecord.setUpdatedAt(LocalDateTime.now());
 
         // Store the flashcard in the database
