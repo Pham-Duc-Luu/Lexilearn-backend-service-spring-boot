@@ -20,5 +20,4 @@ public class FlashcardPaginationResult {
         this.limit = limit;
     }
 
-
 }

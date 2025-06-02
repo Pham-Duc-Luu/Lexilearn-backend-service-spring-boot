@@ -1,4 +1,4 @@
-package MainBackendService.dto.createDto;
+package MainBackendService.dto.Desk;
 
 import com.jooq.sample.model.tables.records.DeskRecord;
 import jakarta.validation.constraints.NotBlank;

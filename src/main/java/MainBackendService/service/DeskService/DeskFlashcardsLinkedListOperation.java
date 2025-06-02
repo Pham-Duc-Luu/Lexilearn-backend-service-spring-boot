@@ -51,9 +51,9 @@ public class DeskFlashcardsLinkedListOperation {
     }
 
     // Delete a flashcard from the desk's linked list
-    public void deleteFlashcardOperation(Integer flashcardId) throws HttpResponseException {
+    public void deleteFlashcardOperation(Integer flashcardId, Integer desk_id) throws HttpResponseException {
         FlashcardRecord flashcardRecord = dslContext.selectFrom(FLASHCARD)
-                .where(FLASHCARD.FLASHCARD_ID.eq(flashcardId))
+                .where(FLASHCARD.FLASHCARD_ID.eq(flashcardId).and(FLASHCARD.FLASHCARD_DESK_ID.eq(desk_id)))
                 .fetchOne();
 
         if (flashcardRecord == null) {
@@ -83,11 +83,17 @@ public class DeskFlashcardsLinkedListOperation {
 
         // If it's a middle node, update the previous node to skip this one
         Integer previousNode = getPreviousNode(flashcardId, deskRecord);
+
         FlashcardRecord previousFlashcard = dslContext.selectFrom(FLASHCARD)
                 .where(FLASHCARD.FLASHCARD_ID.eq(previousNode))
                 .fetchOne();
 
+        if (previousFlashcard == null) {
+            throw new HttpBadRequestException();
+        }
+
         previousFlashcard.setNextFlashcardId(flashcardRecord.getNextFlashcardId()).store();
+        logger.info(previousFlashcard);
         flashcardRecord.delete();
     }
 
@@ -99,13 +105,13 @@ public class DeskFlashcardsLinkedListOperation {
         visitedNodeId.add(node_flashcard_id);
 
         while (node_flashcard_id != null) {
-            FlashcardRecord next_node = dslContext.selectFrom(FLASHCARD)
+            FlashcardRecord node = dslContext.selectFrom(FLASHCARD)
                     .where(FLASHCARD.FLASHCARD_ID.eq(node_flashcard_id))
                     .fetchOne();
 
-            if (next_node == null) throw new HttpBadRequestException("Linked list traverse fail");
+            if (node == null) throw new HttpBadRequestException("Linked list traverse fail");
 
-            node_flashcard_id = next_node.getNextFlashcardId();
+            node_flashcard_id = node.getNextFlashcardId();
 
             // Detect cycles
             if (visitedNodeId.contains(node_flashcard_id)) {
@@ -121,6 +127,88 @@ public class DeskFlashcardsLinkedListOperation {
         return new ArrayList<>(visitedNodeId);
     }
 
+    public DeskRecord switchItemInLinkList(FlashcardRecord flashcard_A, FlashcardRecord flashcard_B, DeskRecord deskRecord) throws HttpResponseException {
+        // Nothing to do if x and y are the same
+        if (flashcard_A.getFlashcardId().equals(flashcard_B.getFlashcardId())) {
+            return deskRecord;
+        }
+
+        // * we can divide this into 2 sub solution
+        // * 1. A and B is adjacent
+        // * 2. A and B is not adjacent
+
+
+        FlashcardRecord prevA = getPreviousNode(flashcard_A.getFlashcardId(), deskRecord, FlashcardRecord.class);
+
+        FlashcardRecord prevB = getPreviousNode(flashcard_B.getFlashcardId(), deskRecord, FlashcardRecord.class);
+
+
+        // * 1.1 If A and B is adjacent
+        // * and
+        // * if A -> B => prevA -> A(prevB) -> B -> ...
+        // * then
+        // * prevA.next = B
+        // * A.next = B.next
+        // * B.next = A
+        if (flashcard_A.getNextFlashcardId() != null && flashcard_A.getNextFlashcardId().equals(flashcard_B.getFlashcardId())
+        ) {
+            // If A is not head of the linked list
+            if (prevA != null) {
+                prevA.setNextFlashcardId(flashcard_B.getFlashcardId()).store();
+            } else {
+                deskRecord.setDeskStartFlashcardId(flashcard_B.getFlashcardId()).store();
+            }
+            flashcard_A.setNextFlashcardId(flashcard_B.getNextFlashcardId()).store();
+            flashcard_B.setNextFlashcardId(flashcard_A.getFlashcardId()).store();
+            return deskRecord;
+        }
+
+
+        // * 1.2 If A and B is adjacent
+        // * and
+        // * if B -> A => prevB -> B(prevA) -> A -> ...
+        // * then
+        // * prevB.next = A
+        // * B.next = A.next
+        // * A.next = B
+        if (flashcard_B.getNextFlashcardId() != null && flashcard_B.getNextFlashcardId().equals(flashcard_A.getFlashcardId())
+        ) {
+            // If B is not head of the linked list
+            if (prevB != null) {
+                prevB.setNextFlashcardId(flashcard_A.getFlashcardId()).store();
+            } else {
+                deskRecord.setDeskStartFlashcardId(flashcard_A.getFlashcardId()).store();
+            }
+            flashcard_B.setNextFlashcardId(flashcard_A.getNextFlashcardId()).store();
+            flashcard_A.setNextFlashcardId(flashcard_B.getFlashcardId()).store();
+            return deskRecord;
+        }
+
+
+        // * 2. A and B is not adjacent
+
+        // If A is not head of the linked list
+        if (prevA != null) {
+            prevA.setNextFlashcardId(flashcard_B.getFlashcardId()).store();
+        } else {
+            deskRecord.setDeskStartFlashcardId(flashcard_B.getFlashcardId()).store();
+        }
+
+        // If B is not head of the linked list
+        if (prevB != null) {
+            prevB.setNextFlashcardId(flashcard_A.getFlashcardId()).store();
+        } else {
+            deskRecord.setDeskStartFlashcardId(flashcard_A.getFlashcardId()).store();
+        }
+        // Swap next pointers
+        Integer temp = flashcard_B.getNextFlashcardId();
+        flashcard_B.setNextFlashcardId(flashcard_A.getNextFlashcardId()).store();
+        flashcard_A.setNextFlashcardId(temp).store();
+
+        return deskRecord;
+
+    }
+
 
     // Get the flashcard ID of the node before the given node
     public Integer getPreviousNode(Integer nodeId, DeskRecord deskRecord) throws HttpResponseException {
@@ -131,16 +219,56 @@ public class DeskFlashcardsLinkedListOperation {
 
         visitedNodeId.add(node_flashcard_id);
 
+
         while (node_flashcard_id != null) {
-            FlashcardRecord next_node = dslContext.selectFrom(FLASHCARD)
+            FlashcardRecord node = dslContext.selectFrom(FLASHCARD)
                     .where(FLASHCARD.FLASHCARD_ID.eq(node_flashcard_id))
                     .fetchOne();
 
-            if (next_node == null) throw new HttpBadRequestException("Linked list traverse fail");
+            if (node == null) throw new HttpBadRequestException("Linked list traverse fail");
 
-            if (next_node.getFlashcardId().equals(nodeId)) return node_flashcard_id;
+            // * break if this is the last item of the linked list
+            if (node.getNextFlashcardId() == null) break;
 
-            node_flashcard_id = next_node.getNextFlashcardId();
+            // * if the next node id === the input node => this is the previous node
+            if (node.getNextFlashcardId().equals(nodeId)) return node_flashcard_id;
+
+            node_flashcard_id = node.getNextFlashcardId();
+
+            if (visitedNodeId.contains(node_flashcard_id)) {
+                logger.error("Cycle detected at node ID: " + node_flashcard_id);
+                break;
+            }
+            visitedNodeId.add(node_flashcard_id);
+        }
+
+        return null;
+    }
+
+    // Get the flashcard ID of the node before the given node
+    public FlashcardRecord getPreviousNode(Integer nodeId, DeskRecord deskRecord, Class<FlashcardRecord> flashcardRecordClass) throws HttpResponseException {
+        Set<Integer> visitedNodeId = new LinkedHashSet<>();
+        Integer node_flashcard_id = deskRecord.getDeskStartFlashcardId();
+
+        if (node_flashcard_id.equals(nodeId)) return null;
+
+        visitedNodeId.add(node_flashcard_id);
+
+
+        while (node_flashcard_id != null) {
+            FlashcardRecord node = dslContext.selectFrom(FLASHCARD)
+                    .where(FLASHCARD.FLASHCARD_ID.eq(node_flashcard_id))
+                    .fetchOne();
+
+            if (node == null) throw new HttpBadRequestException("Linked list traverse fail");
+
+            // * break if this is the last item of the linked list
+            if (node.getNextFlashcardId() == null) break;
+
+            // * if the next node id === the input node => this is the previous node
+            if (node.getNextFlashcardId().equals(nodeId)) return node;
+
+            node_flashcard_id = node.getNextFlashcardId();
 
             if (visitedNodeId.contains(node_flashcard_id)) {
                 logger.error("Cycle detected at node ID: " + node_flashcard_id);

@@ -4,22 +4,18 @@ import MainBackendService.dto.DeskDto;
 import MainBackendService.dto.GraphqlDto.FlashcardPaginationResult;
 import com.jooq.sample.model.enums.DeskDeskStatus;
 import com.jooq.sample.model.tables.records.DeskRecord;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 public class DeskModal {
     private final String thumbnail;
-    //    @GraphQLQuery(name = "id")
     private String id;
-    //    @GraphQLQuery(name = "name")
     private String name;
-    //    @GraphQLQuery(name = "description")
     private String description;
-    //    @GraphQLQuery(name = "icon")
     private String icon;
-    //    @GraphQLQuery(name = "isPublic")
     private Boolean isPublic;
-    //    @GraphQLQuery(name = "ownerId")
     private String ownerId;
     private UserModal owner;
     private String createdAt;
@@ -76,117 +72,6 @@ public class DeskModal {
         this.isPublic = isPublic;
         this.ownerId = ownerId;
         this.thumbnail = thumbnail;
-    }
-
-    public List<FlashcardModal> getFlashcards() {
-        return flashcards;
-    }
-
-    public void setFlashcards(List<FlashcardModal> flashcards) {
-        this.flashcards = flashcards;
-    }
-
-    public DeskDeskStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(DeskDeskStatus status) {
-        this.status = status;
-    }
-
-    public String getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(String updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public FlashcardPaginationResult getFlashcardPaginationResult() {
-        return flashcardPaginationResult;
-    }
-
-    public void setFlashcardPaginationResult(FlashcardPaginationResult flashcardPaginationResult) {
-        this.flashcardPaginationResult = flashcardPaginationResult;
-    }
-
-    public String getThumbnail() {
-        return thumbnail;
-    }
-
-    public UserModal getOwner() {
-        return owner;
-    }
-
-    public void setOwner(UserModal owner) {
-        this.owner = owner;
-    }
-
-    public Boolean getPublic() {
-        return isPublic;
-    }
-
-    public void setPublic(Boolean aPublic) {
-        isPublic = aPublic;
-    }
-
-    public String getOwnerId() {
-        return ownerId;
-    }
-
-    public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
-    }
-
-    public Boolean getIsPublic() {
-        return isPublic;
-    }
-
-    public void setIsPublic(Boolean isPublic) {
-        this.isPublic = isPublic;
-    }
-
-
-    public String getIcon() {
-        return icon;
-    }
-
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
 }

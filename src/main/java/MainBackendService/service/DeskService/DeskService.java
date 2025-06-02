@@ -1,8 +1,9 @@
 package MainBackendService.service.DeskService;
 
+import MainBackendService.dto.Desk.CreateDeskDto;
+import MainBackendService.dto.Desk.UpdateDeskDto;
 import MainBackendService.dto.DeskDto;
 import MainBackendService.dto.FlashcardDto;
-import MainBackendService.dto.createDto.CreateDeskDto;
 import MainBackendService.dto.createDto.CreateFlashcardDto;
 import MainBackendService.dto.createDto.CreateFlashcardsDto;
 import MainBackendService.exception.HttpNotFoundException;
@@ -73,7 +74,6 @@ public class DeskService {
 
     public DeskRecord updateDesk(Integer deskId, DeskDto deskDto) throws JsonProcessingException {
 
-
         // Use jOOQ to update the desk in the database
         int affectedRows = dslContext.update(DESK)
                 .set(DESK.DESK_NAME, deskDto.getDeskName())  // Set new desk name
@@ -96,6 +96,54 @@ public class DeskService {
             throw new IllegalArgumentException("Desk with ID " + deskId + " does not exist or no changes were made.");
         }
     }
+
+    public DeskRecord updateAPartDesk(Integer deskId, UpdateDeskDto updateDeskDto) throws HttpNotFoundException {
+        DeskRecord deskRecord = dslContext.selectFrom(DESK)
+                .where(DESK.DESK_ID.eq(deskId))
+                .fetchOne();
+
+        // Update if not null
+
+        if (deskRecord == null) {
+            throw new HttpNotFoundException("Desk with ID " + deskId + " not found.");
+        }
+
+        // Update fields if non-null
+        if (updateDeskDto.getDesk_name() != null) {
+            deskRecord.setDeskName(updateDeskDto.getDesk_name());
+        }
+
+        if (updateDeskDto.getDesk_description() != null) {
+            deskRecord.setDeskDescription(updateDeskDto.getDesk_description());
+        }
+
+        if (updateDeskDto.getDesk_thumbnail() != null) {
+            deskRecord.setDeskThumbnail(updateDeskDto.getDesk_thumbnail());
+        }
+
+        if (updateDeskDto.getDesk_icon() != null) {
+            deskRecord.setDeskIcon(updateDeskDto.getDesk_icon());
+        }
+
+        if (updateDeskDto.getDesk_is_public() != null) {
+            deskRecord.setDeskIsPublic(updateDeskDto.getDesk_is_public() ? (byte) 1 : (byte) 0);
+        }
+
+        if (updateDeskDto.getDesk_status() != null) {
+            try {
+                DeskDeskStatus status = DeskDeskStatus.valueOf(updateDeskDto.getDesk_status());
+                deskRecord.setDeskStatus(status);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid desk status: " + updateDeskDto.getDesk_status());
+            }
+        }
+
+        // save
+        deskRecord.store();
+
+        return deskRecord;
+    }
+
 
     public DeskRecord getDeskById(Integer deskId) {
         return dslContext.selectFrom(DESK).where(DESK.DESK_ID.eq(deskId)).fetchOne();
@@ -201,7 +249,7 @@ public class DeskService {
                 .fetchOne(0, int.class);
     }
 
-    
+
     // * return true if the user own the desk, false otherwise
     public boolean isUserOwnerOfDesk(Integer userId, Integer deskId) {
         // Query the Desk table to check if the desk exists and the user is the owner

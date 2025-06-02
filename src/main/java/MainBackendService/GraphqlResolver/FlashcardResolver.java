@@ -3,15 +3,14 @@ package MainBackendService.GraphqlResolver;
 import MainBackendService.Microservice.ImageServerService.service.AudioService;
 import MainBackendService.Microservice.ImageServerService.service.ImageService;
 import MainBackendService.dto.AccessTokenDetailsDto;
-import MainBackendService.dto.GraphqlDto.CreateFlashcardInput;
 import MainBackendService.dto.GraphqlDto.FlashcardPaginationResult;
-import MainBackendService.dto.GraphqlDto.UpdateFlashcardInput;
+import MainBackendService.exception.HttpNotFoundException;
 import MainBackendService.exception.HttpResponseException;
 import MainBackendService.exception.HttpUnauthorizedException;
 import MainBackendService.modal.FlashcardModal;
 import MainBackendService.modal.SMModal;
 import MainBackendService.service.AccessTokenJwtService;
-import MainBackendService.service.DeskService.DeskBelongToUserService;
+import MainBackendService.service.DeskService.DeskFlashcardsLinkedListOperation;
 import MainBackendService.service.DeskService.DeskGQLService;
 import MainBackendService.service.DeskService.DeskService;
 import MainBackendService.service.FlashcardService.FlashcardGQLService;
@@ -20,11 +19,11 @@ import MainBackendService.service.SpacedRepetitionSerivce.SM_2_GQLService;
 import MainBackendService.service.UserService.UserService;
 import MainBackendService.utils.HttpHeaderUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.jooq.sample.model.tables.records.DeskRecord;
 import com.netflix.graphql.dgs.*;
 import com.netflix.graphql.dgs.internal.DgsRequestData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Component
 @DgsComponent
@@ -69,59 +67,9 @@ public class FlashcardResolver {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private DeskFlashcardsLinkedListOperation deskFlashcardsLinkedListOperation;
 
-    @DgsMutation
-    public FlashcardModal createFlashcard(@InputArgument CreateFlashcardInput input, DgsDataFetchingEnvironment dfe) throws HttpResponseException {
-
-        DgsRequestData requestData = dfe.getDgsContext().getRequestData();
-
-        List<String> tokens = requestData.getHeaders().get("Authorization");
-        AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
-
-        if (!deskService.isUserOwnerOfDesk(userDetails.getId(), input.getDesk_id())) {
-            throw new HttpUnauthorizedException();
-        }
-        return flashcardGQLService.createFlashcard(input);
-    }
-
-
-    @DgsMutation
-    public FlashcardModal updateFlashcard(
-            @InputArgument UpdateFlashcardInput input, DgsDataFetchingEnvironment dfe) throws HttpResponseException {
-        DgsRequestData requestData = dfe.getDgsContext().getRequestData();
-
-        List<String> tokens = requestData.getHeaders().get("Authorization");
-        AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
-
-        if (!deskService.isUserOwnerOfDesk(userDetails.getId(), input.getDesk_id())) {
-            throw new HttpUnauthorizedException();
-        }
-
-        return flashcardGQLService.updateFlashcard(input);
-
-    }
-
-    @DgsMutation
-    public Integer updateFlashcards(
-            @InputArgument List<UpdateFlashcardInput> inputs, DgsDataFetchingEnvironment dfe) throws HttpResponseException {
-
-
-        List<CompletableFuture<FlashcardModal>> futures = inputs.stream()
-                .map(input -> CompletableFuture.supplyAsync(() -> {
-                    try {
-                        return updateFlashcard(input, dfe);
-                    } catch (HttpResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                }))
-                .collect(Collectors.toList());
-
-        // Wait for all async operations to complete
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-        return inputs.size();
-
-    }
 
     /**
      * GraphQL query resolver for fetching flashcards with pagination.
@@ -142,23 +90,34 @@ public class FlashcardResolver {
         return sm_2_gqlService.getSpacedRepetitionWithFlashcardId(flashcardModal.getId());
     }
 
-    @DgsMutation
-    public Number createFlashcards(@InputArgument List<CreateFlashcardInput> inputs,
-                                   DgsDataFetchingEnvironment dfe) throws HttpResponseException {
+    @DgsQuery
+    public FlashcardPaginationResult getLinkedListFlashcard(@InputArgument Integer skip,
+                                                            @InputArgument Integer limit,
+                                                            @InputArgument Integer deskId) throws HttpResponseException {
+        DeskRecord deskRecord = deskService.getDeskById(deskId);
 
-        List<FlashcardModal> flashcardModals = inputs.stream()
-                .map(input -> {
-                    try {
-                        return createFlashcard(input, dfe);
-                    } catch (HttpResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                }).toList();
+        if (deskRecord == null) {
+            throw new HttpNotFoundException("Desk not found");
+        }
 
+        List<Integer> flashcardIdList = deskFlashcardsLinkedListOperation.linkedListTraverse(deskRecord);
+        int start = Math.min(skip, flashcardIdList.size());
+        int end = Math.min(start + limit, flashcardIdList.size());
 
-        return flashcardModals.size();
+        List<FlashcardModal> flashcardModalList = new ArrayList<>();
+
+        for (Integer flashcardId : flashcardIdList) {
+            try {
+                flashcardModalList.add(flashcardService.getFlashcard(flashcardId));
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error(e);
+                break;
+            }
+        }
+
+        return new FlashcardPaginationResult(flashcardModalList, flashcardIdList.size(), skip, limit);
     }
-
 
     @DgsQuery
     public FlashcardPaginationResult getDeskFlashcards(@InputArgument Integer skip,
@@ -260,18 +219,5 @@ public class FlashcardResolver {
         );
     }
 
-
-    @DgsMutation
-    public Integer deleteFlashcard(@InputArgument Integer flashcardId, @InputArgument Integer deskId, @NotNull DgsDataFetchingEnvironment dfe) throws HttpResponseException {
-        DgsRequestData requestData = dfe.getDgsContext().getRequestData();
-
-        List<String> tokens = requestData.getHeaders().get("Authorization");
-
-        AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
-
-        new DeskBelongToUserService(userDetails.getId(), dslContext).deleteFlashcardInDesk(deskId, flashcardId);
-
-        return flashcardId;
-    }
 
 }

@@ -1,7 +1,9 @@
 package MainBackendService.controller.Flashcard;
 
 import MainBackendService.dto.AccessTokenDetailsDto;
-import MainBackendService.dto.Flashcard.*;
+import MainBackendService.dto.Flashcard.InsertFlashcardDto;
+import MainBackendService.dto.Flashcard.InsertFlashcardRequestBodyDto;
+import MainBackendService.dto.Flashcard.OperationType;
 import MainBackendService.dto.GraphqlDto.FlashcardPaginationResult;
 import MainBackendService.dto.SuccessReponseDto;
 import MainBackendService.exception.*;
@@ -70,47 +72,19 @@ public class FlashcardController {
         return new ResponseEntity<>(new SuccessReponseDto("Review successfully"), HttpStatus.CREATED);
     }
 
-    @PostMapping("/upsert/list")
-    @Operation(
-            summary = "Upsert multiple flashcards into a desk",
-            description = "This endpoint allows the creation, updating, or deletion of multiple flashcards in a single operation. "
-                    + "All flashcards must belong to the same desk. "
-                    + "Each flashcard must have a valid operation type (CREATE, UPDATE, DELETE), "
-                    + "and positions must be unique within the list."
-    )
-    public ResponseEntity<SuccessReponseDto> upsertFlashcards(@Valid AccessTokenDetailsDto accessTokenDetailsDto,
-                                                              @Valid @RequestBody UpsertFlashcardRequestBodyDto upsertFlashcardRequestBodyDto
-    ) throws HttpResponseException {
-
-        if (deskService.getDeskById(upsertFlashcardRequestBodyDto.getDeskId()) == null) {
-            throw new HttpNotFoundException("Desk not found");
-        }
-
-        if (!deskService.isUserOwnerOfDesk(accessTokenDetailsDto.getId(), upsertFlashcardRequestBodyDto.getDeskId()))
-            throw new HttpForbiddenException("You are not allow to modify this desk");
-
-        if (!upsertFlashcardRequestBodyDto.hasUniquePositions())
-            throw new HttpBadRequestException("Your flashcard's position is not unique");
-        if (!upsertFlashcardRequestBodyDto.hasRightOperationType())
-            throw new HttpBadRequestException("Your flashcard's operation type is wrong");
-
-        // * check if all the item is right operation
-        for (UpsertFlashcardDto upsertFlashcardDto : upsertFlashcardRequestBodyDto.getData()) {
-            if (!upsertFlashcardDto.isValidOperation())
-                throw new HttpBadRequestException("Item's operation type is wrong");
-
-        }
-
-
-        return new ResponseEntity<>(new SuccessReponseDto("Upsert successfully"), HttpStatus.CREATED);
-    }
-
     @PostMapping
-    @Operation()
+    @Operation(
+            summary = "Create a new flashcard",
+            description = "Allows a user to create a new flashcard in a specified desk. "
+                    + "The desk must exist and belong to the authenticated user. "
+                    + "The flashcard operation type must be 'CREATE'."
+
+    )
     public ResponseEntity<SuccessReponseDto> insertNewFlashcard(@Valid AccessTokenDetailsDto accessTokenDetailsDto,
                                                                 @Valid @RequestBody InsertFlashcardRequestBodyDto insertFlashcardRequestBodyDto
 
     ) throws HttpResponseException {
+
         Integer deskId = insertFlashcardRequestBodyDto.getDeskId();
 
         InsertFlashcardDto data = insertFlashcardRequestBodyDto.getData();
@@ -135,6 +109,10 @@ public class FlashcardController {
 
         return new ResponseEntity<>(new SuccessReponseDto("created"), HttpStatus.CREATED);
 
+    }
+
+    @PatchMapping
+    public ResponseEntity<SuccessReponseDto<FlashcardModal>> patchUpdateFlashcard(@Valid AccessTokenDetailsDto accessTokenDetailsDto) {
 
     }
 
@@ -169,9 +147,70 @@ public class FlashcardController {
             }
         }
 
-     
+
         return new ResponseEntity(new FlashcardPaginationResult(flashcardModalList, flashcardIdList.size(), skip, limit
         ), HttpStatus.OK);
 
     }
+
+
+    @PatchMapping("/switch-card")
+    public ResponseEntity<SuccessReponseDto> switchFlashcardOrder(
+            @Valid AccessTokenDetailsDto accessTokenDetailsDto,
+            @RequestParam("desk_id") Integer deskId,
+            @RequestParam("flashcard_1") Integer flashcard_1,
+            @RequestParam("flashcard_2") Integer flashcard_2
+    ) throws HttpResponseException {
+
+
+        DeskRecord deskRecord = deskService.getDeskById(deskId);
+
+        if (deskRecord == null) {
+            throw new HttpNotFoundException("Desk not found");
+        }
+
+        if (!deskService.isUserOwnerOfDesk(accessTokenDetailsDto.getId(), deskRecord.getDeskId()))
+            throw new HttpUnauthorizedException();
+
+        FlashcardRecord flashcardRecord_1 = flashcardService.getFlashcardInDesk(deskRecord.getDeskId(), flashcard_1);
+        FlashcardRecord flashcardRecord_2 = flashcardService.getFlashcardInDesk(deskRecord.getDeskId(), flashcard_2);
+
+        if (flashcardRecord_2 == null || flashcardRecord_1 == null) {
+            throw new HttpNotFoundException();
+        }
+
+        deskFlashcardsLinkedListOperation.switchItemInLinkList(flashcardRecord_1, flashcardRecord_2, deskRecord);
+
+        return new ResponseEntity<SuccessReponseDto>(new SuccessReponseDto("Switched"), HttpStatus.OK);
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<SuccessReponseDto> deleteFlashcard(
+            @Valid AccessTokenDetailsDto accessTokenDetailsDto,
+            @RequestParam("desk_id") Integer deskId,
+            @RequestParam("flashcard_id") Integer flashcard_id
+    ) throws HttpResponseException {
+
+
+        DeskRecord deskRecord = deskService.getDeskById(deskId);
+
+        if (deskRecord == null) {
+            throw new HttpNotFoundException("Desk not found");
+        }
+
+        if (!deskService.isUserOwnerOfDesk(accessTokenDetailsDto.getId(), deskRecord.getDeskId()))
+            throw new HttpUnauthorizedException();
+
+        FlashcardRecord flashcardRecord = flashcardService.getFlashcardInDesk(deskRecord.getDeskId(), flashcard_id);
+
+        if (flashcardRecord == null) {
+            throw new HttpNotFoundException();
+        }
+
+        deskFlashcardsLinkedListOperation.deleteFlashcardOperation(flashcard_id, deskId);
+
+        return new ResponseEntity<SuccessReponseDto>(new SuccessReponseDto("Deleted"), HttpStatus.OK);
+    }
+
+
 }

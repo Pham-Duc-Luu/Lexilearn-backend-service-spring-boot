@@ -66,3 +66,4 @@ input UpsertFlashcardInput {
     back_sound: String
     operation: OperationType
 }
+

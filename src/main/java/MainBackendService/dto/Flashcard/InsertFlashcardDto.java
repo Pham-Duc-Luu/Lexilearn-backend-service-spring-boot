@@ -5,19 +5,33 @@ import MainBackendService.modal.FlashcardModal;
 import com.jooq.sample.model.tables.records.FlashcardRecord;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.hibernate.validator.constraints.URL;
 
 @Data
 
 public class InsertFlashcardDto {
+
+    @URL(message = "front_image must be a valid URL")
     private String front_image;
+
+    @URL(message = "front_image must be a valid URL")
     private String front_sound;
+
+    @URL(message = "front_image must be a valid URL")
     private String back_image;
+
+    @URL(message = "front_image must be a valid URL")
     private String back_sound;
+
+    
     @NotBlank()
+    @Size(max = 1000)
     private String front_text;
 
     @NotBlank()
+    @Size(max = 1000)
     private String back_text;
 
 
