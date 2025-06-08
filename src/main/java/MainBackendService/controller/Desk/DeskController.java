@@ -3,11 +3,9 @@ package MainBackendService.controller.Desk;
 
 import MainBackendService.dto.AccessTokenDetailsDto;
 import MainBackendService.dto.Desk.CreateDeskDto;
-import MainBackendService.dto.Desk.UpdateDeskDto;
+import MainBackendService.dto.Desk.UpdateDeskRequestBodyDto;
 import MainBackendService.dto.DeskDto;
-import MainBackendService.dto.HttpErrorDto;
 import MainBackendService.dto.SuccessReponseDto;
-import MainBackendService.exception.HttpForbiddenException;
 import MainBackendService.exception.HttpNotFoundException;
 import MainBackendService.exception.HttpResponseException;
 import MainBackendService.modal.DeskModal;
@@ -78,18 +76,12 @@ public class DeskController {
     @PatchMapping("")
     @Operation(summary = "update desk information, using patch -> update a part of the desk, if the input field = null -> not update")
     // TODO : change the deskdto -> need more clearly
-    public ResponseEntity<SuccessReponseDto<DeskModal>> patchUpdateDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @Valid @RequestBody UpdateDeskDto updateDeskDto) throws HttpResponseException {
+    public ResponseEntity<SuccessReponseDto<DeskModal>> patchUpdateDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @Valid @RequestBody UpdateDeskRequestBodyDto updateDeskRequestBodyDto) throws HttpResponseException {
 
-        DeskRecord deskRecord = deskService.getDeskById(updateDeskDto.getDesk_id());
-        if (deskRecord == null) {
-            throw new HttpNotFoundException("Desk not found");
-        }
-
-        if (!deskService.isUserOwnerOfDesk(accessTokenDetailsDto.getId(), deskRecord.getDeskId()))
-            throw new HttpForbiddenException("You are not allow to modify this resource");
+        VerifyDeskAuth(accessTokenDetailsDto.getId(), updateDeskRequestBodyDto.getDeskId());
 
 
-        deskRecord = deskService.updateAPartDesk(updateDeskDto.getDesk_id(), updateDeskDto);
+        DeskRecord deskRecord = deskService.updateAPartDesk(updateDeskRequestBodyDto.getDeskId(), updateDeskRequestBodyDto.getData());
 
         return new ResponseEntity<SuccessReponseDto<DeskModal>>(new SuccessReponseDto<DeskModal>(new DeskModal(deskRecord)), HttpStatus.OK);
 
@@ -98,31 +90,36 @@ public class DeskController {
 
     @DeleteMapping("/{desk_id}")
     @Operation(summary = "delete desk ")
-    public ResponseEntity<?> deleteDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable("desk_id") Long deskId) {
-        Optional<DeskRecord> desk = deskService.findDeskById(Math.toIntExact(deskId));
-        if (desk.isEmpty()) {
-            HttpErrorDto errorResponse = new HttpErrorDto(
-                    HttpStatus.NOT_FOUND.value(),
-                    HttpStatus.NOT_FOUND.getReasonPhrase(),
-                    "Desk not found"
-            );
+    public ResponseEntity<SuccessReponseDto> deleteDesk(@Valid AccessTokenDetailsDto accessTokenDetailsDto, @PathVariable(name = "desk_id", required = true) Integer deskId) throws HttpResponseException {
 
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
-        }
+        VerifyDeskAuth(accessTokenDetailsDto.getId(), deskId);
 
-        if (!desk.get().getDeskOwnerId().equals(accessTokenDetailsDto.getId())) {
-            HttpErrorDto errorResponse = new HttpErrorDto(
-                    HttpStatus.UNAUTHORIZED.value(),
-                    HttpStatus.UNAUTHORIZED.getReasonPhrase(),
-                    "You are not allow to modify this desk"
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
 
-        }
         // Proceed to delete
         deskService.deleteDesk(Math.toIntExact(deskId));
+
         // Return success response
-        return new ResponseEntity<>(new SuccessReponseDto<>("Desk deleted successfully."), HttpStatus.OK);
+        return new ResponseEntity(new SuccessReponseDto<>("Desk deleted successfully."), HttpStatus.OK);
+    }
+
+//    @PatchMapping("/{desk_id}")
+//    public ResponseEntity<SuccessReponseDto<DeskModal>> publicDeskChange(@Valid AccessTokenDetailsDto accessTokenDetailsDto,
+//                                                                         @PathVariable(name = "desk_id", required = true) Integer deskId,
+//                                                                         @RequestParam(name = "public", required = true, defaultValue = "true") Boolean isPublic) throws HttpResponseException {
+//        VerifyDeskAuth(accessTokenDetailsDto.getId(), deskId);
+//
+//        return new ResponseEntity(new SuccessReponseDto<>(deskService.publicDesk(deskId, isPublic)), HttpStatus.OK);
+//    }
+
+    public void VerifyDeskAuth(Integer userId, Integer deskId) throws HttpNotFoundException {
+        if (deskId == null) {
+            throw new HttpNotFoundException("Desk not found");
+        }
+
+        if (!deskService.isUserOwnerOfDesk(userId, deskId)) {
+            throw new HttpNotFoundException("You are not allow to modify this resource");
+
+        }
     }
 
 }

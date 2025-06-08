@@ -93,14 +93,23 @@ public class FlashcardResolver {
     @DgsQuery
     public FlashcardPaginationResult getLinkedListFlashcard(@InputArgument Integer skip,
                                                             @InputArgument Integer limit,
-                                                            @InputArgument Integer deskId) throws HttpResponseException {
+                                                            @InputArgument Integer deskId,
+                                                            DgsDataFetchingEnvironment dfe
+    ) throws HttpResponseException {
+
+        DgsRequestData requestData = dfe.getDgsContext().getRequestData();
+
+        List<String> tokens = requestData.getHeaders().get("Authorization");
+
+        AccessTokenDetailsDto userDetails = httpHeaderUtil.accessTokenVerification(tokens);
+
         DeskRecord deskRecord = deskService.getDeskById(deskId);
 
         if (deskRecord == null) {
             throw new HttpNotFoundException("Desk not found");
         }
 
-        List<Integer> flashcardIdList = deskFlashcardsLinkedListOperation.linkedListTraverse(deskRecord);
+        List<Integer> flashcardIdList = flashcardService.AutoRepairFlashcardLinkedlist(deskId);
         int start = Math.min(skip, flashcardIdList.size());
         int end = Math.min(start + limit, flashcardIdList.size());
 

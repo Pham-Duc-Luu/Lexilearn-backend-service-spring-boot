@@ -17,6 +17,7 @@ import MainBackendService.utils.HttpHeaderUtil;
 import com.jooq.sample.model.tables.records.UseravatarRecord;
 import com.netflix.graphql.dgs.*;
 import com.netflix.graphql.dgs.internal.DgsRequestData;
+import feign.FeignException;
 import org.apache.coyote.BadRequestException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -93,6 +94,7 @@ public class UserResolver {
             // Extract filename (last part of the path)
             String fileName = path.substring(path.lastIndexOf("/") + 1);
 
+
             String presignedAvatarUrl = imageServerClient.getUserImage(tokens.getFirst(), fileName).getUrl();
 
             if (presignedAvatarUrl == null) {
@@ -105,6 +107,11 @@ public class UserResolver {
 
         } catch (URISyntaxException e) {
             return userProfileDto.get();
+        } catch (FeignException e) {
+            // * there are some error when try to fetch data from other server
+            e.printStackTrace();
+            return userProfileDto.get();
+            
         }
 
 

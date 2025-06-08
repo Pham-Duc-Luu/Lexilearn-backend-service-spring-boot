@@ -16,4 +16,5 @@ public class InsertFlashcardRequestBodyDto {
     public boolean hasRightOperationType() {
         return data.getOperation().equals(OperationType.CREATE);
     }
+    
 }

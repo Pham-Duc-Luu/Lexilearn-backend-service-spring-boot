@@ -1,6 +1,5 @@
 package MainBackendService.service.DeskService;
 
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import MainBackendService.dto.DeskDto;
 import MainBackendService.dto.GraphqlDto.DeskPaginationResult;
 import MainBackendService.dto.GraphqlDto.DeskQueryFilter;
@@ -8,6 +7,9 @@ import MainBackendService.dto.GraphqlDto.DeskQuerySort;
 import MainBackendService.dto.GraphqlDto.SearchDeskArg;
 import MainBackendService.modal.DeskModal;
 import MainBackendService.service.UserService.UserService;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import com.jooq.sample.model.enums.DeskDeskStatus;
+import com.jooq.sample.model.tables.records.DeskRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.*;
@@ -50,7 +52,6 @@ public class DeskGQLService {
      * @return DeskPaginationResult containing the list of desks and pagination details.
      */
 
-//    @GraphQLQuery(name = "getDesks")
     public DeskPaginationResult getDesks(Integer skip, Integer limit) {
         // define a query condition
 
@@ -102,18 +103,16 @@ public class DeskGQLService {
                 .from(DESK)
                 .where(DSL.trueCondition()); // Start with a true condition for dynamic filtering
 
-        // ✅ Apply filtering based on `deskQueryFilter`
-//        if (deskQueryFilter != null) {
-//            if (deskQueryFilter.getIsPublic() != null) {
-//                query.and(DESK.DESK_IS_PUBLIC.eq((byte) (deskQueryFilter.getIsPublic() ? 1 : 0)));
-//            }
-//            if (deskQueryFilter.getDeskStatus() != null) {
-////                switch (deskQueryFilter.getDeskStatus()) {
-////                    case
-////                }
-//                query.and(DESK.DESK_STATUS.eq(deskQueryFilter.getDeskStatus())); // Enum to string conversion
-//            }
-//        }
+//         ✅ Apply filtering based on `deskQueryFilter`
+        if (deskQueryFilter != null) {
+
+            if (deskQueryFilter.getStatus() != null) {
+                query.and(DESK.DESK_STATUS.eq(deskQueryFilter.getStatus())); // Enum to string conversion
+            } else {
+                // * return all except bin
+                query.and(DESK.DESK_STATUS.ne(DeskDeskStatus.BIN));
+            }
+        }
 
         //✅ Apply sorting based on `deskQuerySort`
         if (deskQuerySort != null && deskQuerySort.getDeskKey() != null && deskQuerySort.getOrder() != null) {
@@ -129,13 +128,13 @@ public class DeskGQLService {
         int total = dslContext.fetchCount(query);
 
         // ✅ Apply pagination
-        List<DeskModal> desks = query
+        List<DeskRecord> deskRecordList = query
                 .limit(limit)
                 .offset(skip)
-                .fetchInto(DeskModal.class);
+                .fetch();
 
         // Return the result wrapped in DeskPaginationResult
-        return new DeskPaginationResult(desks, total, skip, limit);
+        return new DeskPaginationResult(deskRecordList.stream().map(item -> new DeskModal(item)).toList(), total, skip, limit);
     }
 
 
@@ -249,11 +248,15 @@ public class DeskGQLService {
                 query.and(DESK.DESK_IS_PUBLIC.eq((byte) (deskQueryFilter.getIsPublic() ? 1 : 0)));
             }
             if (deskQueryFilter.getStatus() != null) {
-//                switch (deskQueryFilter.getDeskStatus()) {
-//                    case
-//                }
+
                 query.and(DESK.DESK_STATUS.eq(deskQueryFilter.getStatus())); // Enum to string conversion
+            } else {
+                query.and(DESK.DESK_STATUS.ne(DeskDeskStatus.BIN)); // Enum to string conversion
+
             }
+        } else {
+            query.and(DESK.DESK_STATUS.ne(DeskDeskStatus.BIN)); // Enum to string conversion
+
         }
 
         //✅ Apply sorting based on `deskQuerySort`

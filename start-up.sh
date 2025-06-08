@@ -10,9 +10,9 @@ export $(cat local.env | xargs)
 
 mvn clean package -DskipTests
 
-#sudo docker build -t lexilearn-spring-boot-main .
+sudo docker build -t lexilearn-spring-boot-main .
 
-#sudo docker compose up
+sudo docker compose up
 # Run the Spring Boot app
- java -jar target/*.jar  # Adjust path if necessary
+# java -jar target/*.jar  # Adjust path if necessary
 

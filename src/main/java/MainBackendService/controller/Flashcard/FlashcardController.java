@@ -4,6 +4,7 @@ import MainBackendService.dto.AccessTokenDetailsDto;
 import MainBackendService.dto.Flashcard.InsertFlashcardDto;
 import MainBackendService.dto.Flashcard.InsertFlashcardRequestBodyDto;
 import MainBackendService.dto.Flashcard.OperationType;
+import MainBackendService.dto.Flashcard.UpdateFlashcardRequestBodyDto;
 import MainBackendService.dto.GraphqlDto.FlashcardPaginationResult;
 import MainBackendService.dto.SuccessReponseDto;
 import MainBackendService.exception.*;
@@ -112,17 +113,74 @@ public class FlashcardController {
     }
 
     @PatchMapping
-    public ResponseEntity<SuccessReponseDto<FlashcardModal>> patchUpdateFlashcard(@Valid AccessTokenDetailsDto accessTokenDetailsDto) {
+    public ResponseEntity<SuccessReponseDto<FlashcardModal>> patchUpdateFlashcard(@Valid AccessTokenDetailsDto accessTokenDetailsDto,
+                                                                                  @Valid @RequestBody UpdateFlashcardRequestBodyDto updateFlashcardRequestBodyDto
+
+    ) throws HttpResponseException {
+
+        Integer deskId = updateFlashcardRequestBodyDto.getDeskId();
+        Integer flashcardId = updateFlashcardRequestBodyDto.getFlashcardId();
+
+        InsertFlashcardDto data = updateFlashcardRequestBodyDto.getData();
+
+
+        if (deskService.getDeskById(deskId) == null) {
+            throw new HttpNotFoundException("Desk not found");
+        }
+
+
+        if (!deskService.isUserOwnerOfDesk(accessTokenDetailsDto.getId(), deskId))
+            throw new HttpForbiddenException("You are not allow to modify this desk");
+
+        if (!data.getOperation().equals(OperationType.UPDATE))
+            throw new HttpBadRequestException("Your flashcard's operation type is wrong");
+
+
+        FlashcardRecord updatedFlashcard = flashcardService.patchUpdateFlashcard(deskId, flashcardId, data.mapToFlashcardModal());
+
+        return new ResponseEntity(new SuccessReponseDto(new FlashcardModal(updatedFlashcard)), HttpStatus.OK);
+
 
     }
 
+    @PutMapping
+    public ResponseEntity<SuccessReponseDto<FlashcardModal>> putUpdateFlashcard(@Valid AccessTokenDetailsDto accessTokenDetailsDto,
+                                                                                @Valid @RequestBody UpdateFlashcardRequestBodyDto updateFlashcardRequestBodyDto
+
+    ) throws HttpResponseException {
+
+        Integer deskId = updateFlashcardRequestBodyDto.getDeskId();
+        Integer flashcardId = updateFlashcardRequestBodyDto.getFlashcardId();
+
+        InsertFlashcardDto data = updateFlashcardRequestBodyDto.getData();
+
+
+        if (deskService.getDeskById(deskId) == null) {
+            throw new HttpNotFoundException("Desk not found");
+        }
+
+
+        if (!deskService.isUserOwnerOfDesk(accessTokenDetailsDto.getId(), deskId))
+            throw new HttpForbiddenException("You are not allow to modify this desk");
+
+        if (!data.getOperation().equals(OperationType.UPDATE))
+            throw new HttpBadRequestException("Your flashcard's operation type is wrong");
+
+
+        FlashcardModal flashcardModal = data.mapToFlashcardModal();
+        flashcardModal.setId(flashcardId);
+
+        FlashcardModal updatedFlashcard = flashcardService.updateFlashcard(deskId, flashcardId, flashcardModal);
+
+        return new ResponseEntity(new SuccessReponseDto(updatedFlashcard), HttpStatus.OK);
+
+    }
 
     @GetMapping("/linked-list")
     public ResponseEntity<FlashcardPaginationResult> getLinkedListFlashcard(@Valid AccessTokenDetailsDto accessTokenDetailsDto,
                                                                             @RequestParam("desk_id") Integer deskId,
                                                                             @RequestParam(value = "skip", required = false, defaultValue = "0") Integer skip,
                                                                             @RequestParam(value = "limit", required = false, defaultValue = "30") Integer limit
-
     ) throws HttpResponseException {
 
         DeskRecord deskRecord = deskService.getDeskById(deskId);
@@ -152,7 +210,6 @@ public class FlashcardController {
         ), HttpStatus.OK);
 
     }
-
 
     @PatchMapping("/switch-card")
     public ResponseEntity<SuccessReponseDto> switchFlashcardOrder(
@@ -211,6 +268,5 @@ public class FlashcardController {
 
         return new ResponseEntity<SuccessReponseDto>(new SuccessReponseDto("Deleted"), HttpStatus.OK);
     }
-
 
 }

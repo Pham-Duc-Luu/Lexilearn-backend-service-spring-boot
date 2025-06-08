@@ -25,7 +25,7 @@ public class InsertFlashcardDto {
     @URL(message = "front_image must be a valid URL")
     private String back_sound;
 
-    
+
     @NotBlank()
     @Size(max = 1000)
     private String front_text;
@@ -44,9 +44,7 @@ public class InsertFlashcardDto {
     }
 
     public FlashcardModal mapToFlashcardModal() throws HttpBadRequestException {
-        if (!isValidOperation()) {
-            throw new HttpBadRequestException("Wrong operation type");
-        }
+
         FlashcardModal flashcardModal = new FlashcardModal();
 
 
@@ -64,9 +62,6 @@ public class InsertFlashcardDto {
 
     public FlashcardRecord mapToFlashcardRecord() throws HttpBadRequestException {
 
-        if (!isValidOperation()) {
-            throw new HttpBadRequestException("Wrong operation type");
-        }
 
         FlashcardRecord flashcardRecord = new FlashcardRecord();
 

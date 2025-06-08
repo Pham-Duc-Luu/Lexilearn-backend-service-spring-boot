@@ -1,12 +1,9 @@
 package MainBackendService.dto.Desk;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class UpdateDeskDto {
-    @NotNull
-    private Integer desk_id;
 
     private String desk_description;
     private String desk_thumbnail;

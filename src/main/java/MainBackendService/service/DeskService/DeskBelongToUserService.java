@@ -30,10 +30,6 @@ public class DeskBelongToUserService {
     }
 
 
-    public void deleteDesk(Integer deskId) {
-        dslContext.delete(desk).where(ownerDeskCondition.and(desk.DESK_ID.eq(deskId))).execute();
-    }
-
     public void createDesk(DeskRecord deskRecord) {
         deskRecord.setDeskOwnerId(USER_ID);
         deskRecord.setDeskId(null);

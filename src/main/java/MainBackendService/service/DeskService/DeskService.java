@@ -3,19 +3,16 @@ package MainBackendService.service.DeskService;
 import MainBackendService.dto.Desk.CreateDeskDto;
 import MainBackendService.dto.Desk.UpdateDeskDto;
 import MainBackendService.dto.DeskDto;
-import MainBackendService.dto.FlashcardDto;
-import MainBackendService.dto.createDto.CreateFlashcardDto;
-import MainBackendService.dto.createDto.CreateFlashcardsDto;
+import MainBackendService.exception.HttpBadRequestException;
 import MainBackendService.exception.HttpNotFoundException;
+import MainBackendService.exception.HttpResponseException;
 import MainBackendService.exception.HttpUnauthorizedException;
 import MainBackendService.modal.DeskModal;
-import MainBackendService.service.FlashcardService.FlashcardService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jooq.sample.model.enums.DeskDeskStatus;
 import com.jooq.sample.model.tables.Flashcard;
 import com.jooq.sample.model.tables.records.DeskRecord;
-import com.jooq.sample.model.tables.records.FlashcardRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
@@ -23,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,23 +28,12 @@ import static com.jooq.sample.model.tables.Desk.DESK;
 
 @Service
 public class DeskService {
-    private final DSLContext dslContext;
-    private final FlashcardService flashcardService;
     Logger logger = LogManager.getLogger(DeskService.class);
     ObjectMapper objectMapper = new ObjectMapper();
-    private ElasticsearchOperations elasticsearchOperations;
-
-    public DeskService(DSLContext dslContext, FlashcardService flashcardService, ElasticsearchOperations elasticsearchOperations) {
-        this.dslContext = dslContext;
-        this.flashcardService = flashcardService;
-        this.elasticsearchOperations = elasticsearchOperations;
-    }
-
     @Autowired
-    public DeskService(DSLContext dslContext, FlashcardService flashcardService) {
-        this.dslContext = dslContext;
-        this.flashcardService = flashcardService;
-    }
+    private DSLContext dslContext;
+    @Autowired
+    private ElasticsearchOperations elasticsearchOperations;
 
     public DeskRecord createDesk(CreateDeskDto createDeskDTO) {
         Integer deskOwnerId = createDeskDTO.getDeskOwnerId();
@@ -139,6 +126,7 @@ public class DeskService {
         }
 
         // save
+        deskRecord.setUpdatedAt(LocalDateTime.now());
         deskRecord.store();
 
         return deskRecord;
@@ -173,14 +161,14 @@ public class DeskService {
         }
     }
 
-    public DeskRecord updateUserDesk(Integer userId, DeskDto deskDto) throws HttpUnauthorizedException, JsonProcessingException {
+    public DeskRecord updateUserDesk(Integer userId, DeskDto deskDto) throws HttpResponseException, JsonProcessingException {
         if (!isUserOwnerOfDesk(userId, deskDto.getDeskOwnerId())) {
             throw new HttpUnauthorizedException("You are not allow to modify this desk");
         }
         return updateDesk(deskDto.getDeskOwnerId(), deskDto);
     }
 
-    public DeskRecord updateUserDesk(Integer userId, DeskModal deskModal) throws HttpUnauthorizedException, JsonProcessingException {
+    public DeskRecord updateUserDesk(Integer userId, DeskModal deskModal) throws HttpResponseException, JsonProcessingException {
         if (!isUserOwnerOfDesk(userId, Integer.valueOf(deskModal.getOwnerId()))) {
             throw new HttpUnauthorizedException("You are not allow to modify this desk");
         }
@@ -251,29 +239,45 @@ public class DeskService {
 
 
     // * return true if the user own the desk, false otherwise
-    public boolean isUserOwnerOfDesk(Integer userId, Integer deskId) {
+    public boolean isUserOwnerOfDesk(Integer userId, Integer deskId) throws HttpNotFoundException {
+
+
         // Query the Desk table to check if the desk exists and the user is the owner
         Integer ownerId = dslContext.select(DESK.DESK_OWNER_ID)
                 .from(DESK)
                 .where(DESK.DESK_ID.eq(deskId))  // Match by deskId
                 .fetchOne(DESK.DESK_OWNER_ID);  // Fetch the owner ID of the desk
 
+        if (ownerId == null) {
+            throw new HttpNotFoundException("desk not found");
+        }
 
         // Check if the fetched ownerId matches the provided userId
-        return ownerId != null && ownerId.equals(userId);
+        return ownerId.equals(userId);
     }
 
-    public void deleteDesk(Integer deskId) {
+    public void deleteDesk(Integer deskId) throws HttpResponseException {
         // Delete the Desk record by deskId
-        int rowsDeleted = dslContext.deleteFrom(DESK)
-                .where(DESK.DESK_ID.eq(deskId))
+        int rowsDeleted = dslContext.update(DESK)
+                .set(DESK.DESK_STATUS, DeskDeskStatus.BIN).where(DESK.DESK_ID.eq(deskId))
                 .execute();
 
         if (rowsDeleted == 0) {
-            throw new IllegalArgumentException("Desk with id " + deskId + " not found.");
+            throw new HttpBadRequestException("Desk with id " + deskId + " not found.");
         }
 
     }
+
+    public DeskRecord deleteDesk(Integer deskId, Class<DeskRecord> deskRecordClass) throws HttpResponseException {
+        DeskRecord deskRecord = dslContext.selectFrom(DESK).where(DESK.DESK_ID.eq(deskId)).fetchOne();
+        if (deskRecord == null) {
+            throw new HttpNotFoundException();
+        }
+        deskRecord.setDeskStatus(DeskDeskStatus.BIN).store();
+        return deskRecord;
+
+    }
+
 
     public List<DeskRecord> getDesks(Integer limit, Integer offset) {
         return dslContext.selectFrom(DESK)
@@ -282,39 +286,14 @@ public class DeskService {
                 .fetchInto(DeskRecord.class);  // Map to DeskRecord
     }
 
-    public void cloneDesk(Integer deskId, Integer userId) throws HttpNotFoundException {
-
-        // * find the desk with the id
-        Optional<DeskRecord> deskRecordSource = findDeskById(deskId);
-        if (deskRecordSource.isEmpty()) {
-            throw new HttpNotFoundException("No desk with id " + deskId);
-        }
-        DeskRecord deskSource = deskRecordSource.get();
-        deskSource.setDeskOwnerId(userId);
-
-        // * get the flashcard in desk source
-        List<FlashcardRecord> flashcards = flashcardService.getFlashcardsInDesk(deskSource.getDeskId());
-
-        // * clone the data from desk source to desk target
-        CreateDeskDto createDeskDto = new CreateDeskDto(deskSource);
-        createDeskDto.setDeskOwnerId(userId);
-
-        // * set up flashcards dto
-        List<CreateFlashcardDto> flashcardsDto = flashcards.stream().map(flashcard -> {
-                    FlashcardDto flashcardDto = new FlashcardDto(flashcard);
-                    return new CreateFlashcardDto(flashcardDto);
-                }
-        ).toList();
-        CreateFlashcardsDto createFlashcardsDto = new CreateFlashcardsDto(flashcardsDto);
-
-        // * create a new desk
-        DeskRecord newDesk = createDesk(createDeskDto);
-
-        // * create a new flashcards in desk
-        for (CreateFlashcardDto flashcard : createFlashcardsDto.getFlashcards()) {
-            flashcardService.createFlashcardInDesk(newDesk.getDeskId(), flashcard);
+    public DeskRecord publicDesk(Integer deskId, Boolean isPublic) throws HttpNotFoundException {
+        DeskRecord deskRecord = dslContext.selectFrom(DESK).where(DESK.DESK_ID.eq(deskId)).fetchOne();
+        if (deskRecord == null) {
+            throw new HttpNotFoundException();
         }
 
+        deskRecord.setDeskIsPublic(isPublic ? (byte) 1 : (byte) 0).store();
+        return deskRecord;
     }
 
 }
